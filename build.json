@@ -7,6 +7,18 @@
         "postbuild": ["cp libc/bin/libc.a qor-userland/lib/libc.a"]
     },
     {
+        "name": "Shell",
+        "make-path": "qor-userland/Internals/shell",
+        "bin-path": "qor-userland/Internals/shell/bin/shell",
+        "output-path": "/bin/shell"
+    },
+    {
+        "name": "Terminal",
+        "make-path": "qor-userland/Internals/term",
+        "bin-path": "qor-userland/Internals/term/bin/term",
+        "output-path": "/bin/term"
+    },
+    {
         "name": "Hello",
         "make-path": "qor-userland/Examples/hello",
         "bin-path": "qor-userland/Examples/hello/bin/hello",
