@@ -1,0 +1,15 @@
+[
+    {
+        "name": "LibC",
+        "make-path": "libc",
+        "bin-path": "libc/bin/libc.a",
+        "output-path": "/lib/libc.a",
+        "postbuild": ["cp libc/bin/libc.a qor-userland/lib/libc.a"]
+    },
+    {
+        "name": "Hello",
+        "make-path": "qor-userland/Examples/hello",
+        "bin-path": "qor-userland/Examples/hello/bin/hello",
+        "output-path": "/bin/hello2"
+    }
+]
