@@ -7,6 +7,13 @@
         "postbuild": ["cp libc/bin/libc.a qor-userland/lib/libc.a"]
     },
     {
+        "name": "LibArg",
+        "make-path": "qor-userland/Libraries/libarg",
+        "bin-path": "qor-userland/Libraries/libarg/bin/libarg.a",
+        "output-path": "/lib/libarg.a",
+        "postbuild": ["cp qor-userland/Libraries/libarg/bin/libarg.a qor-userland/lib/libarg.a"]
+    },
+    {
         "name": "Shell",
         "make-path": "qor-userland/Internals/shell",
         "bin-path": "qor-userland/Internals/shell/bin/shell",
@@ -22,6 +29,12 @@
         "name": "Hello",
         "make-path": "qor-userland/Examples/hello",
         "bin-path": "qor-userland/Examples/hello/bin/hello",
-        "output-path": "/bin/hello2"
+        "output-path": "/bin/hello"
+    },
+    {
+        "name": "ls",
+        "make-path": "qor-userland/Utils/ls",
+        "bin-path": "qor-userland/Utils/ls/bin/ls",
+        "output-path": "/bin/ls2"
     }
 ]
