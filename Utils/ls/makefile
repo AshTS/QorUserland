@@ -5,7 +5,7 @@ INCLUDE_DIR = ${qorIncludePath}
 LINK = ld.lld
 LINKFLAGS =
 
-INCLUDES = libc/sys/syscalls.h libc/stdio.h
+INCLUDES = libc/assert.h libc/dirent.h libc/stdio.h argparse.h
 
 LIB_DIR = ${qorLibPath}
 
