@@ -35,6 +35,6 @@
         "name": "ls",
         "make-path": "qor-userland/Utils/ls",
         "bin-path": "qor-userland/Utils/ls/bin/ls",
-        "output-path": "/bin/ls2"
+        "output-path": "/bin/ls"
     }
 ]
