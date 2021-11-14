@@ -197,11 +197,15 @@ void editor_write(struct editor* editor, char* name)
 
     struct string** walk = editor->line_buffer;
 
+    size_t total_bytes_written = 0;
+
     while (*walk != 0)
     {
-        fprintf(file, "%s\n", (*walk)->buffer);
+        total_bytes_written += fprintf(file, "%s\n", (*walk)->buffer);
         walk++;
     }
+
+    printf("%ld\n", total_bytes_written);
 
     fclose(file);
 }

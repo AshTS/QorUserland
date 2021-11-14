@@ -34,7 +34,11 @@ int main(int argc, char** argv)
     struct editor* edit = editor_alloc_new();
 
     // Allocate a buffer for stdin
-    char buffer[1024];
+    char buffer[512];
+
+    // Default file to write to
+    char default_file[512];
+    default_file[0] = 0;
 
     enum state state = COMMAND;
 
@@ -49,8 +53,29 @@ int main(int argc, char** argv)
 
         // Read from stdin
         size_t bytes_read;
-        while (!(bytes_read = fread(buffer, 1, 1023, stdin)));
+        while (!(bytes_read = fread(buffer, 1, 511, stdin)));
         buffer[bytes_read - 1] = 0;
+
+        // Split the command on a space
+        char cmd_buf[512];
+        char arg_buf[512];
+
+        cmd_buf[0] = 0;
+        arg_buf[0] = 0;
+
+        char* ptr = strchr(buffer, ' ');
+
+        if (ptr == 0)
+        {
+            strcpy(cmd_buf, buffer);
+        }
+        else
+        {
+            *ptr = 0;
+
+            strcpy(cmd_buf, buffer);
+            strcpy(arg_buf, ptr + 1);
+        }
 
         if (state == COMMAND)
         {
@@ -69,6 +94,22 @@ int main(int argc, char** argv)
             else if (strcmp(buffer, "a") == 0)
             {
                 state = APPENDING;
+            }
+            else if (strcmp(cmd_buf, "w") == 0)
+            {
+                if (strlen(arg_buf) == 0 && default_file[0] == 0)
+                {
+                    printf("Must give a file before default write\n");
+                }
+                else if (strlen(arg_buf) == 0)
+                {
+                    editor_write(edit, default_file);
+                }
+                else
+                {
+                    editor_write(edit, arg_buf);
+                    strcpy(default_file, arg_buf);
+                }
             }
         }
         else if (state == APPENDING)
