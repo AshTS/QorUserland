@@ -43,9 +43,16 @@ int main(int argc, char** argv)
     char default_file[512];
     default_file[0] = 0;
 
+    char** file_argument = arg_get_free(&args);
+
+    if (file_argument != 0)
+    {
+        editor_open(edit, *file_argument);
+    }
+
     enum state state = COMMAND;
 
-    show_prompt = true;
+    show_prompt = false;
 
     while (1)
     {
@@ -168,7 +175,7 @@ int main(int argc, char** argv)
 
 void show_usage(char* prog_name)
 {
-    printf("Usage: %s [OPTIONS] ... [FILE] ...\n", prog_name);
+    printf("Usage: %s [OPTIONS] ... [FILE]\n", prog_name);
     printf(" Edit a text file\n\n");
     printf("       -h --help          Show the usage\n");
 }
