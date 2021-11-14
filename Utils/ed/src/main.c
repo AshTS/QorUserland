@@ -6,11 +6,14 @@
 #include "argparse.h"
 
 #include "editor.h"
+#include "parser.h"
+
+extern void dump();
 
 enum state
 {
     COMMAND,
-    APPENDING
+    INSERTING,
 };
 
 bool show_prompt = false;
@@ -46,9 +49,10 @@ int main(int argc, char** argv)
 
     while (1)
     {
+        if (0) printf("State:\n Cursor: %ld\n  Line Count: %ld\n  Allocated: %ld\n", edit->cursor, edit->line_count, edit->lines_alloc);
         if (show_prompt && state == COMMAND)
         {
-            printf("* ", state);
+            printf("* ");
         }
 
         // Read from stdin
@@ -56,73 +60,102 @@ int main(int argc, char** argv)
         while (!(bytes_read = fread(buffer, 1, 511, stdin)));
         buffer[bytes_read - 1] = 0;
 
-        // Split the command on a space
-        char cmd_buf[512];
-        char arg_buf[512];
-
-        cmd_buf[0] = 0;
-        arg_buf[0] = 0;
-
-        char* ptr = strchr(buffer, ' ');
-
-        if (ptr == 0)
-        {
-            strcpy(cmd_buf, buffer);
-        }
-        else
-        {
-            *ptr = 0;
-
-            strcpy(cmd_buf, buffer);
-            strcpy(arg_buf, ptr + 1);
-        }
-
         if (state == COMMAND)
         {
-            if (strcmp(buffer, "q") == 0)
+            // Parse the command
+            struct command* cmd = parse_command(buffer, edit);
+
+            if (cmd == 0)
             {
+                command_alloc_free(cmd);
+                continue;
+            }
+
+            if (0) printf("Command:\n  Start: %ld\n  End: %ld\n  cmd:%c\n  Arg:`%s`\n", cmd->start_line, cmd->end_line, cmd->cmd, cmd->arguments);
+
+            if (cmd->cmd == 'q')
+            {
+                command_alloc_free(cmd);
                 break;
             }
-            else if (strcmp(buffer, "P") == 0)
+            else if (cmd->cmd == 'P')
             {
                 show_prompt = true;
             } 
-            else if (strcmp(buffer, ",p") == 0)
+            else if (cmd->cmd == 'p' || cmd->cmd == 'n')
             {
-                editor_print_lines(edit, 0, 0, false);
+                editor_print_lines(edit, cmd->start_line, cmd->end_line, cmd->cmd == 'n');
             }
-            else if (strcmp(buffer, "a") == 0)
+            else if (cmd->cmd == 'a')
             {
-                state = APPENDING;
+                edit->cursor = cmd->start_line + 1;
+                
+                edit->cursor--;
+                state = INSERTING;
             }
-            else if (strcmp(cmd_buf, "w") == 0)
+            else if (cmd->cmd == 'i')
             {
-                if (strlen(arg_buf) == 0 && default_file[0] == 0)
+                if (cmd->start_line < 2)
                 {
-                    printf("Must give a file before default write\n");
-                }
-                else if (strlen(arg_buf) == 0)
-                {
-                    editor_write(edit, default_file);
+                    edit->cursor = 1;
                 }
                 else
                 {
-                    editor_write(edit, arg_buf);
-                    strcpy(default_file, arg_buf);
+                    edit->cursor = cmd->start_line;
+                }
+
+                edit->cursor--;
+                state = INSERTING;
+            }
+            else if (cmd->cmd == 'd')
+            {
+                edit->cursor = cmd->start_line - 1;
+
+                editor_delete_lines(edit, cmd->start_line, cmd->end_line - cmd->start_line + 1);
+            }
+            else if (cmd->cmd == 'w')
+            {
+                if (cmd->arguments && cmd->arguments[0] != 0)
+                {
+                    strcpy(default_file, cmd->arguments);
+                }
+                else if (default_file[0] == 0)
+                {
+                    printf("? No default file given.\n");
+                    command_alloc_free(cmd);
+                    continue;
+                }
+
+                editor_write(edit, default_file);
+            }
+            else if (cmd->cmd == 'e')
+            {
+                if (cmd->arguments && cmd->arguments[0] != 0)
+                {
+                    strcpy(default_file, cmd->arguments);
+
+                    editor_open(edit, default_file);
+                }
+                else
+                {
+                    printf("? No default file given.\n");
                 }
             }
+            
+            command_alloc_free(cmd);
         }
-        else if (state == APPENDING)
+        else if (state == INSERTING)
         {
             if (strcmp(buffer, ".") == 0)
             {
                 state = COMMAND;
                 continue;
             }
-
-            editor_write_line(edit, edit->cursor + 1, buffer);
-
-            edit->cursor++;
+            else
+            {
+                edit->cursor++;
+                editor_insert_line(edit, edit->cursor, buffer);
+            }
         }
     }
     
