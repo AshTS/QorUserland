@@ -42,5 +42,11 @@
         "make-path": "qor-userland/Utils/cat",
         "bin-path": "qor-userland/Utils/cat/bin/cat",
         "output-path": "/bin/cat"
+    },
+    {
+        "name": "ed",
+        "make-path": "qor-userland/Utils/ed",
+        "bin-path": "qor-userland/Utils/ed/bin/ed",
+        "output-path": "/bin/ed"
     }
 ]
