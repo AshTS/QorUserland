@@ -63,9 +63,15 @@
         "output-path": "/bin/mkdir"
     },
     {
-        "name": "ed",
+        "name": "Editor",
         "make-path": "qor-userland/Utils/ed",
         "bin-path": "qor-userland/Utils/ed/bin/ed",
         "output-path": "/bin/ed"
+    },
+    {
+        "name": "Assembler",
+        "make-path": "qor-userland/Utils/as",
+        "bin-path": "qor-userland/Utils/as/bin/as",
+        "output-path": "/bin/as"
     }
 ]
