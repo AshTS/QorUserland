@@ -45,7 +45,7 @@ int main(int argc, char** argv)
 
     char** file_argument = arg_get_free(&args);
 
-    if (file_argument != 0)
+    if (argc > 1 && file_argument != 0)
     {
         editor_open(edit, *file_argument);
     }
