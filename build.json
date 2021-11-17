@@ -57,6 +57,12 @@
         "output-path": "/bin/cat"
     },
     {
+        "name": "mkdir",
+        "make-path": "qor-userland/Utils/mkdir",
+        "bin-path": "qor-userland/Utils/mkdir/bin/mkdir",
+        "output-path": "/bin/mkdir"
+    },
+    {
         "name": "ed",
         "make-path": "qor-userland/Utils/ed",
         "bin-path": "qor-userland/Utils/ed/bin/ed",
