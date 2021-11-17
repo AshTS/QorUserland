@@ -12,6 +12,8 @@ static int RUNNING_PID = 0;
 static bool WAITING = true;
 static bool IS_TIMING = false;
 
+static int RETURN_CODE = 0;
+
 void display_tag();
 
 int handle_redirect(char** argv);
@@ -31,6 +33,7 @@ void handler(int sig, struct siginfo_t *info, void *ucontext)
     else
     {
         WAITING = false;
+        RETURN_CODE = 127;
     }
 
     IS_TIMING = false;
@@ -173,7 +176,30 @@ void display_tag()
     int pos = getcwd(buffer, 63);
     buffer[pos] = 0;
 
-    printf("%s$> ", buffer);
+    if (RETURN_CODE == 0)
+    {
+        printf("%s$> ", buffer);    
+    }
+    else if (RETURN_CODE == 130)
+    {
+        printf("%s$ [SIGINT]>", buffer);
+        RETURN_CODE = 0;
+    }
+    else if (RETURN_CODE == 137)
+    {
+        printf("%s$ [SIGKILL]>", buffer);
+        RETURN_CODE = 0;
+    }
+    else if (RETURN_CODE == 143)
+    {
+        printf("%s$ [SIGTERM]>", buffer);
+        RETURN_CODE = 0;
+    }
+    else
+    {
+        printf("%s$ [%i]>", buffer, RETURN_CODE);
+        RETURN_CODE = 0;
+    }
 }
 
 int handle_redirect(char** argv)
@@ -258,7 +284,7 @@ int run_exec(char* exec, char** argv, char** envp)
     else
     {
         RUNNING_PID = pid;
-        wait(0);
+        wait(&RETURN_CODE);
         RUNNING_PID = 0;
 
         return 0;
