@@ -14,6 +14,13 @@
         "postbuild": ["cp qor-userland/Libraries/libarg/bin/libarg.a qor-userland/lib/libarg.a"]
     },
     {
+        "name": "LibGraphics",
+        "make-path": "qor-userland/Libraries/libgraphics",
+        "bin-path": "qor-userland/Libraries/libgraphics/bin/libgraphics.a",
+        "output-path": "/lib/libgraphics.a",
+        "postbuild": ["cp qor-userland/Libraries/libgraphics/bin/libgraphics.a qor-userland/lib/libgraphics.a"]
+    },
+    {
         "name": "Shell",
         "make-path": "qor-userland/Internals/shell",
         "bin-path": "qor-userland/Internals/shell/bin/shell",
@@ -30,6 +37,12 @@
         "make-path": "qor-userland/Examples/hello",
         "bin-path": "qor-userland/Examples/hello/bin/hello",
         "output-path": "/bin/hello"
+    },
+    {
+        "name": "GameOfLife",
+        "make-path": "qor-userland/Examples/gol",
+        "bin-path": "qor-userland/Examples/gol/bin/gol",
+        "output-path": "/bin/gol"
     },
     {
         "name": "ls",
