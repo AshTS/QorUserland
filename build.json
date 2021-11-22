@@ -63,6 +63,12 @@
         "output-path": "/bin/mkdir"
     },
     {
+        "name": "sync",
+        "make-path": "qor-userland/Utils/sync",
+        "bin-path": "qor-userland/Utils/sync/bin/sync",
+        "output-path": "/bin/sync"
+    },
+    {
         "name": "Editor",
         "make-path": "qor-userland/Utils/ed",
         "bin-path": "qor-userland/Utils/ed/bin/ed",

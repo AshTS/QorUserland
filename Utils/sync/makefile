@@ -5,23 +5,22 @@ INCLUDE_DIR = ${qorIncludePath}
 LINK = ld.lld
 LINKFLAGS =
 
-INCLUDES = libc/assert.h libc/dirent.h libc/stdio.h argparse.h
-
+INCLUDES = 
 LIB_DIR = ${qorLibPath}
 
 OUTPUT_DIR = bin
 BUILD_DIR = bin
 SRC_DIR = src
 
-_LIBS = libc.a libarg.a
+_LIBS = libc.a
 LIBS = $(patsubst %,$(LIB_DIR)/%,$(_LIBS))
 
-_OBJ = main.o parser.o libelf.o codegen.o riscv.o instparse.o
+_OBJ = main.o
 OBJ = $(patsubst %,$(BUILD_DIR)/%,$(_OBJ))
 
 RAW_INCLUDES = $(patsubst %, $(INCLUDE_DIR)/%, $(INCLUDES))
 
-$(OUTPUT_DIR)/as : $(BUILD_DIR) $(OBJ) $(LIBS)
+$(OUTPUT_DIR)/sync : $(BUILD_DIR) $(OBJ) $(LIBS)
 	$(LINK) $(LINKFLAGS) $(OBJ) $(LIBS) -o $@
 
 $(BUILD_DIR)/%.o : $(SRC_DIR)/%.c $(RAW_INCLUDES)
