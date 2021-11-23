@@ -301,6 +301,14 @@ Token interpret_token(char* token, char* filename, size_t line_number, size_t co
     {
         return token_str_type(INSTRUCTION, token, filename, line_number, column);
     }
+    else if (strcmp(token, "j") == 0)
+    {
+        return token_str_type(INSTRUCTION, token, filename, line_number, column);
+    }
+    else if (strcmp(token, "li") == 0)
+    {
+        return token_str_type(INSTRUCTION, token, filename, line_number, column);
+    }
     else
     {
         if (check_is_number(token))
