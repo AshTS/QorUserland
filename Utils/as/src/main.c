@@ -95,8 +95,10 @@ int assemble_file(char* filename)
 
     struct GenerationSettings* result = generate(tokens, count, &section_count);
 
-    link(result);
-    write_to_elf(result, "a.out");
+    if (link(result))
+    {
+        write_to_elf(result, "a.out");
+    };
 
     free(tokens);
     

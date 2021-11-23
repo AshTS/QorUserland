@@ -45,12 +45,12 @@ void linking_expand_links(struct LinkingObject* obj)
     obj->allocated_links = next;
 }
 
-void linking_add_link(struct LinkingObject* obj, char* section, char* symbol, size_t offset, enum LinkingType type)
+void linking_add_link(struct LinkingObject* obj, char* section, char* symbol, Location loc, size_t offset, enum LinkingType type)
 {
     if (obj->link_i == obj->allocated_links)
     {
         linking_expand_links(obj);
     }
 
-    obj->links[obj->link_i++] = (struct Link){.section = section, .symbol = symbol, .offset = offset, .type = type};
+    obj->links[obj->link_i++] = (struct Link){.section = section, .symbol = symbol, .offset = offset, .type = type, .loc = loc};
 }

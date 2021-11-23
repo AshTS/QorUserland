@@ -207,17 +207,17 @@ bool settings_add_to_current(struct GenerationSettings* settings, void* data, si
     return true;
 }
 
-bool settings_add_instruction(struct GenerationSettings* settings, struct Instruction* inst)
+bool settings_add_instruction(struct GenerationSettings* settings, struct Instruction* inst, Location loc)
 {
     struct OutputSection sect = settings->sections[settings->sections_i - 1];
 
     if (inst->j_link)
     {
-        linking_add_link(settings->linking, sect.name, inst->link, sect.length, JUMP_LINK);
+        linking_add_link(settings->linking, sect.name, inst->link, loc, sect.length, JUMP_LINK);
     }
     else if (inst->b_link)
     {
-        linking_add_link(settings->linking, sect.name, inst->link, sect.length, BRANCH_LINK);
+        linking_add_link(settings->linking, sect.name, inst->link, loc, sect.length, BRANCH_LINK);
     }
 
     uint32_t compiled = compile_instruction(inst);

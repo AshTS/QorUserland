@@ -22,7 +22,7 @@ int expect_register(struct Token** tokens, struct ParsingError* error);
 bool expect_symbol(struct Token** tokens, struct ParsingError* error, char c);
 bool expect_number(struct Token** tokens, struct ParsingError* error, size_t* number);
 
-bool add_instruction(struct GenerationSettings* settings, struct ParsingError* error, struct Instruction* inst);
+bool add_instruction(struct GenerationSettings* settings, struct ParsingError* error, struct Instruction* inst, Location);
 bool parse_instruction(struct Token** tokens, struct GenerationSettings* settings, struct ParsingError* error);
 
 bool parse_code(struct Token** tokens, struct GenerationSettings* settings, struct ParsingError* error)
@@ -135,7 +135,7 @@ bool parse_rzi(struct Token** tokens, struct Instruction* inst, struct ParsingEr
     return true;
 }
 
-bool parse_ra(struct Token** tokens, struct Instruction* inst, struct ParsingError* error)
+bool parse_ra(struct Token** tokens, struct Instruction* inst, struct ParsingError* error, Location* loc)
 {
     inst->rdest = expect_register(tokens, error);
     CONSUME_TOKEN(tokens);
@@ -149,17 +149,19 @@ bool parse_ra(struct Token** tokens, struct Instruction* inst, struct ParsingErr
     CONSUME_TOKEN(tokens);
 
     inst->link = expect_identifier(tokens, error);
+    *loc = tokens[0][0].location;
     CONSUME_TOKEN(tokens);
     if (inst->link == 0) return false;
 
     return true;
 }
 
-bool parse_za(struct Token** tokens, struct Instruction* inst, struct ParsingError* error)
+bool parse_za(struct Token** tokens, struct Instruction* inst, struct ParsingError* error, Location* loc)
 {
     inst->rdest = 0;
 
     inst->link = expect_identifier(tokens, error);
+    *loc = tokens[0][0].location;
     CONSUME_TOKEN(tokens);
     if (inst->link == 0) return false;
 
@@ -169,6 +171,7 @@ bool parse_za(struct Token** tokens, struct Instruction* inst, struct ParsingErr
 bool parse_instruction(struct Token** tokens, struct GenerationSettings* settings, struct ParsingError* error)
 {
     struct Instruction inst;
+    Location identifier_loc;
 
     inst.j_link = false;
     inst.b_link = false;
@@ -197,14 +200,14 @@ bool parse_instruction(struct Token** tokens, struct GenerationSettings* setting
     {
         inst.instruction = JAL;
         
-        if (!parse_ra(tokens, &inst, error)) return false;
+        if (!parse_ra(tokens, &inst, error, &identifier_loc)) return false;
         inst.j_link = true;
     }
     else if (strcmp(op, "j") == 0)
     {
         inst.instruction = JAL;
         
-        if (!parse_za(tokens, &inst, error)) return false;
+        if (!parse_za(tokens, &inst, error, &identifier_loc)) return false;
         inst.j_link = true;
     }
     else
@@ -213,7 +216,7 @@ bool parse_instruction(struct Token** tokens, struct GenerationSettings* setting
         assert(0);
     }
 
-    return add_instruction(settings, error, &inst);
+    return add_instruction(settings, error, &inst, identifier_loc);
 }
 
 char* expect_identifier(struct Token** tokens, struct ParsingError* error)
@@ -286,9 +289,9 @@ bool expect_number(struct Token** tokens, struct ParsingError* error, size_t* nu
     }
 }
 
-bool add_instruction(struct GenerationSettings* settings, struct ParsingError* error, struct Instruction* inst)
+bool add_instruction(struct GenerationSettings* settings, struct ParsingError* error, struct Instruction* inst, Location loc)
 {
-    if (!settings_add_instruction(settings, inst))
+    if (!settings_add_instruction(settings, inst, loc))
     {
         error->error_text = "Cannot add instruction to nonexistant section, try adding a section directive";
         return false;

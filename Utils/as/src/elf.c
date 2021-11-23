@@ -20,12 +20,14 @@ bool link(struct GenerationSettings* settings)
 
         if (!settings_get_label(settings, link.symbol, &addr))
         {
-            printf("ERROR: Unable to locate symbol `%s` for linking\n", link.symbol);
+            printf("ERROR: Unable to locate symbol `%s` for linking at %s\n", link.symbol, render_location(&link.loc));
+            return false;
         }
 
         if (!settings_get_section(settings, link.section, &index))
         {
             printf("ERROR: Unable to locate section `%s` for linking\n", link.section);
+            return false;
         }
 
         size_t offset = addr - (settings->sections[index].vaddr + link.offset);
