@@ -7,6 +7,7 @@
 
 #include "parser.h"
 #include "riscv.h"
+#include "linking.h"
 
 struct OutputSection
 {
@@ -36,6 +37,8 @@ struct GenerationSettings
     size_t sections_i;
     size_t labels_i;
 
+    struct LinkingObject* linking;
+
     size_t current_addr;
 };
 
@@ -48,6 +51,7 @@ void settings_expand_labels(struct GenerationSettings*);
 void settings_add_section(struct GenerationSettings*, char* name);
 void settings_add_label(struct GenerationSettings*, char* name, size_t addr);
 bool settings_get_label(struct GenerationSettings*, char* name, size_t* addr);
+bool settings_get_section(struct GenerationSettings*, char* name, size_t* index);
 void settings_alloc_free(struct GenerationSettings*);
 bool settings_add_to_current(struct GenerationSettings*, void*, size_t);
 bool settings_add_instruction(struct GenerationSettings*, struct Instruction*);

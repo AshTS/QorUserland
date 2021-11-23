@@ -6,6 +6,7 @@
 
 enum RISCVInstruction
 {
+    JAL,
     ADDI,
     ECALL
 };
@@ -18,6 +19,11 @@ struct Instruction
     uint8_t rs2;
 
     uint64_t imm;
+
+    bool j_link;
+    bool b_link;
+
+    char* link;
 };
 
 char* render_instruction(struct Instruction*);

@@ -18,6 +18,9 @@ char* render_instruction(struct Instruction* inst)
         case ECALL:
             length = sprintf(buffer, "ecall");
             break;
+        case JAL:
+            length = sprintf(buffer, "jal x%i, %s", inst->rdest, inst->link);
+            break;
         default:
             assert(0);
     }
@@ -42,6 +45,10 @@ uint32_t compile_instruction(struct Instruction* inst)
             return result;
         case ECALL:
             return   (uint32_t)0b00000000000000000000000001110011;
+        case JAL:
+            result = (uint32_t)0b00000000000000000000000001101111;
+            result |= inst->rdest << 7;
+            return result;
         default:
             printf("Unhandled Instruction `%s`\n", render_instruction(inst));
             assert(0 && "Not yet Implemented");

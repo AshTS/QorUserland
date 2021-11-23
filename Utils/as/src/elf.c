@@ -5,18 +5,68 @@
 #include <libc/stdio.h>
 #include <libc/string.h>
 
+bool link(struct GenerationSettings* settings)
+{
+    printf("\nLinks: %ld\n", settings->linking->link_i);
+    
+    for (size_t i = 0; i < settings->linking->link_i; i++)
+    {
+        struct Link link = settings->linking->links[i];
+
+        printf("Link: %10s+%p : %s (%s)\n", link.section, (void*)link.offset, link.symbol, link.type == JUMP_LINK ? "JUMP" : "BRANCH");
+
+        size_t addr;
+        size_t index;
+
+        if (!settings_get_label(settings, link.symbol, &addr))
+        {
+            printf("ERROR: Unable to locate symbol `%s` for linking\n", link.symbol);
+        }
+
+        if (!settings_get_section(settings, link.section, &index))
+        {
+            printf("ERROR: Unable to locate section `%s` for linking\n", link.section);
+        }
+
+        size_t offset = addr - (settings->sections[index].vaddr + link.offset);
+        uint32_t* ptr = settings->sections[index].buffer + link.offset;
+
+        uint32_t value = 0;
+
+        if (link.type == JUMP_LINK)
+        {
+            offset &= ~1;
+            
+            value |= ((offset >> 12) & 0b1111111) << 12;
+            value |= ((offset >> 11) & 0b1) << 20;
+            value |= ((offset >> 1) & 0b1111111111) << 21;
+            value |= ((offset >> 20) & 0b1) << 31;
+        }
+        else
+        {
+            assert(0 && "Not yet implemented");
+        }
+
+        *ptr |= value;
+    }
+
+    return true;
+}
+
 bool write_to_elf(struct GenerationSettings* settings, char* name)
 {
-    printf("Labels: %ld\n", settings->labels_i);
+    printf("\nLabels: %ld\n", settings->labels_i);
     printf("Sections: %ld\n", settings->sections_i);
 
     for (size_t i = 0; i < settings->labels_i; i++)
     {
-        printf("Label: %15s: %p\n", settings->labels[i].label, (void*)settings->labels[i].addr);
+        printf("Label: %15s: %p\n", settings->labels[i].label, settings->labels[i].addr);
     }
 
     for (size_t i = 0; i < settings->sections_i; i++)
     {
+        printf("\n");
+
         dump_section(settings->sections + i);
     }
 

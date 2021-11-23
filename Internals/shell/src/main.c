@@ -182,22 +182,22 @@ void display_tag()
     }
     else if (RETURN_CODE == 130)
     {
-        printf("%s$ [SIGINT]>", buffer);
+        printf("%s$ [SIGINT]> ", buffer);
         RETURN_CODE = 0;
     }
     else if (RETURN_CODE == 137)
     {
-        printf("%s$ [SIGKILL]>", buffer);
+        printf("%s$ [SIGKILL]> ", buffer);
         RETURN_CODE = 0;
     }
     else if (RETURN_CODE == 143)
     {
-        printf("%s$ [SIGTERM]>", buffer);
+        printf("%s$ [SIGTERM]> ", buffer);
         RETURN_CODE = 0;
     }
     else
     {
-        printf("%s$ [%i]>", buffer, RETURN_CODE);
+        printf("%s$ [%i]> ", buffer, RETURN_CODE);
         RETURN_CODE = 0;
     }
 }

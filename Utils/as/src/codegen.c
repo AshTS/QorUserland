@@ -79,6 +79,8 @@ struct GenerationSettings* settings_alloc_new()
 
     settings->current_addr = 0x8000000;
 
+    settings->linking = linking_alloc_new();
+
     return settings;
 }
 
@@ -127,6 +129,8 @@ void settings_alloc_free(struct GenerationSettings* settings)
 
     if (settings->sections != 0)
         free(settings->sections);
+
+    linking_alloc_free(settings->linking);
 
     free(settings);
 }
@@ -205,6 +209,17 @@ bool settings_add_to_current(struct GenerationSettings* settings, void* data, si
 
 bool settings_add_instruction(struct GenerationSettings* settings, struct Instruction* inst)
 {
+    struct OutputSection sect = settings->sections[settings->sections_i - 1];
+
+    if (inst->j_link)
+    {
+        linking_add_link(settings->linking, sect.name, inst->link, sect.length, JUMP_LINK);
+    }
+    else if (inst->b_link)
+    {
+        linking_add_link(settings->linking, sect.name, inst->link, sect.length, BRANCH_LINK);
+    }
+
     uint32_t compiled = compile_instruction(inst);
 
     return settings_add_to_current(settings, &compiled, 4);
@@ -218,6 +233,20 @@ bool settings_get_label(struct GenerationSettings* settings, char* name, size_t*
         if (strcmp(settings->labels[i].label, name) == 0)
         {
             *addr = settings->labels[i].addr;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool settings_get_section(struct GenerationSettings* settings, char* name, size_t* index)
+{
+    for (size_t i = 0; i < settings->sections_i; i++)
+    {
+        if (strcmp(settings->sections[i].name, name) == 0)
+        {
+            *index = i;
             return true;
         }
     }

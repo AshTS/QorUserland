@@ -62,6 +62,7 @@ struct SectionHeader
     ELF_WIDTH sh_entsize;
 };
 
+bool link(struct GenerationSettings*);
 bool write_to_elf(struct GenerationSettings* settings, char* name);
 
 #endif // _LIBELF_H

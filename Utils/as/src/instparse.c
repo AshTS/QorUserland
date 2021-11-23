@@ -110,9 +110,32 @@ bool parse_rri(struct Token** tokens, struct Instruction* inst, struct ParsingEr
     return true;
 }
 
+bool parse_ra(struct Token** tokens, struct Instruction* inst, struct ParsingError* error)
+{
+    inst->rdest = expect_register(tokens, error);
+    CONSUME_TOKEN(tokens);
+    if (inst->rdest < 0) return false;
+
+    if (!expect_symbol(tokens, error, ','))
+    {
+        CONSUME_TOKEN(tokens);
+        return false;
+    }
+    CONSUME_TOKEN(tokens);
+
+    inst->link = expect_identifier(tokens, error);
+    CONSUME_TOKEN(tokens);
+    if (inst->link == 0) return false;
+
+    return true;
+}
+
 bool parse_instruction(struct Token** tokens, struct GenerationSettings* settings, struct ParsingError* error)
 {
     struct Instruction inst;
+
+    inst.j_link = false;
+    inst.b_link = false;
 
     char* op = expect_instruction(tokens, error);
     CONSUME_TOKEN(tokens);
@@ -127,6 +150,13 @@ bool parse_instruction(struct Token** tokens, struct GenerationSettings* setting
         inst.instruction = ADDI;
         
         if (!parse_rri(tokens, &inst, error)) return false;
+    }
+    else if (strcmp(op, "jal") == 0)
+    {
+        inst.instruction = JAL;
+        
+        if (!parse_ra(tokens, &inst, error)) return false;
+        inst.j_link = true;
     }
     else
     {
