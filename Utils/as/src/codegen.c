@@ -209,3 +209,18 @@ bool settings_add_instruction(struct GenerationSettings* settings, struct Instru
 
     return settings_add_to_current(settings, &compiled, 4);
 }
+
+
+bool settings_get_label(struct GenerationSettings* settings, char* name, size_t* addr)
+{
+    for (size_t i = 0; i < settings->labels_i; i++)
+    {
+        if (strcmp(settings->labels[i].label, name) == 0)
+        {
+            *addr = settings->labels[i].addr;
+            return true;
+        }
+    }
+
+    return false;
+}

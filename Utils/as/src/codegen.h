@@ -47,6 +47,7 @@ void settings_expand_sections(struct GenerationSettings*);
 void settings_expand_labels(struct GenerationSettings*);
 void settings_add_section(struct GenerationSettings*, char* name);
 void settings_add_label(struct GenerationSettings*, char* name, size_t addr);
+bool settings_get_label(struct GenerationSettings*, char* name, size_t* addr);
 void settings_alloc_free(struct GenerationSettings*);
 bool settings_add_to_current(struct GenerationSettings*, void*, size_t);
 bool settings_add_instruction(struct GenerationSettings*, struct Instruction*);

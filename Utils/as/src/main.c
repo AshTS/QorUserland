@@ -9,6 +9,7 @@
 #include "parser.h"
 #include "codegen.h"
 #include "riscv.h"
+#include "elf.h"
 
 void show_usage(char*);
 int assemble_file(char*);
@@ -94,19 +95,7 @@ int assemble_file(char* filename)
 
     struct GenerationSettings* result = generate(tokens, count, &section_count);
 
-
-    printf("Labels: %ld\n", result->labels_i);
-    printf("Sections: %ld\n", result->sections_i);
-
-    for (size_t i = 0; i < result->labels_i; i++)
-    {
-        printf("Label: %15s: %p\n", result->labels[i].label, (void*)result->labels[i].addr);
-    }
-
-    for (size_t i = 0; i < result->sections_i; i++)
-    {
-        dump_section(result->sections + i);
-    }
+    write_to_elf(result, "a.out");
 
     free(tokens);
     
@@ -119,7 +108,7 @@ struct GenerationSettings* generate(Token* tokens, size_t count, size_t* section
 {
     for (size_t i = 0; i < count; i++)
     {
-        printf("%s\n", render_token(&tokens[i]));
+        // printf("%s\n", render_token(&tokens[i]));
     }
 
     struct Instruction inst; 
@@ -134,13 +123,5 @@ struct GenerationSettings* generate(Token* tokens, size_t count, size_t* section
             printf("Error:   %s at %s\n", error.error_text, render_location(&error.loc));
         }
     }
-
-    printf("Settings: %p\n", settings);
-
-    for (size_t i = 0; i < 10000; i++)
-    {
-        printf("");
-    }
-
     return settings;
 }

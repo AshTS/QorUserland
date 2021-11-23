@@ -1,6 +1,6 @@
 .section .text
 
 _start:
-    addi a7, a7, 60
-    addi a0, a0, 42
+    addi a7, zero, 60
+    addi a0, zero, 42
     ecall
