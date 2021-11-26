@@ -59,7 +59,7 @@ bool link(struct GenerationSettings* settings)
         {
             offset &= ~1;
             
-            value |= ((offset >> 5) & 0b11111) << 25;
+            value |= ((offset >> 5) & 0b111111) << 25;
             value |= ((offset >> 11) & 0b1) << 7;
             value |= ((offset >> 1) & 0b1111) << 8;
             value |= ((offset >> 12) & 0b1) << 31;

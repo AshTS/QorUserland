@@ -12,7 +12,7 @@
 #include "riscv.h"
 #include "elf.h"
 
-#define DEBUG
+// #define DEBUG
 
 #ifdef DEBUG
 bool SHOW_DEBUG = true;
@@ -141,7 +141,7 @@ struct GenerationSettings* generate(Token* tokens, size_t count, size_t* section
 {
     for (size_t i = 0; i < count; i++)
     {
-        printf("%s\n", render_token(&tokens[i]));
+        // printf("%s\n", render_token(&tokens[i]));
     }
 
     struct Instruction inst; 

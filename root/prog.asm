@@ -8,26 +8,40 @@ newln:
 .align 16
 
 _start:
-    li a0, 5
+    li s0, 0
+
+loop:
+    add a0, s0, zero
+
     call print_num
-exit:
-    li a7, 60
-    li a0, 0
-    ecall
+
+    addi s0, s0, 1
+    li s1, 10
+    blt s0, s1, loop
+
+    call print_newline
+
+    li a0, 42
+    call exit
+
 
 print_num:
     la a1, numbers
-    push ra
-    add a1, a1, z0
+    add a1, a1, a0
     li a7, 1
     li a0, 1
     li a2, 1
     ecall
+    ret
+
+print_newline:
     la a1, newln
     li a7, 1
     li a0, 1
     li a2, 1
     ecall
-    la ra, _start
-    pop ra
     ret
+
+exit:
+    li a7, 60
+    ecall
