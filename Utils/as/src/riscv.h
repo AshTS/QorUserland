@@ -10,6 +10,7 @@ enum RISCVInstruction
 {
     LUI,
     JAL,
+    JALR,
     BEQ,
     BNE,
     BLT,

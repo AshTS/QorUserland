@@ -119,6 +119,8 @@ uint32_t compile_instruction(struct Instruction* inst)
             return INSTRUCTION_BUILD(0b0110111, inst->rdest, 0, 0, 0, 0);
         case JAL:
             return INSTRUCTION_BUILD(0b1101111, inst->rdest, 0, 0, 0, 0);
+        case JALR:
+            return INSTRUCTION_BUILD(0b1100111, inst->rdest, 0b000, inst->rs1, 0, 0);
         case BEQ:
             return INSTRUCTION_BUILD(0b1100011, 0, 0b000, inst->rs1, inst->rs2, 0);
         case BNE:

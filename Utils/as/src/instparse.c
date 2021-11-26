@@ -413,12 +413,35 @@ bool parse_instruction(struct Token** tokens, struct GenerationSettings* setting
         if (!parse_ra(tokens, &inst, error, &identifier_loc)) return false;
         inst.link_type = JUMP_LINK;
     }
+    else if (strcmp(op, "jalr") == 0)
+    {
+        inst.instruction = JALR;
+        
+        if (!parse_rri(tokens, &inst, error)) return false;
+    }
     else if (strcmp(op, "j") == 0)
     {
         inst.instruction = JAL;
         
         if (!parse_za(tokens, &inst, error, &identifier_loc)) return false;
         inst.link_type = JUMP_LINK;
+    }
+    else if (strcmp(op, "call") == 0)
+    {
+        inst.instruction = JAL;
+        
+        if (!parse_za(tokens, &inst, error, &identifier_loc)) return false;
+
+        inst.rdest = 1;
+
+        inst.link_type = JUMP_LINK;
+    }
+    else if (strcmp(op, "ret") == 0)
+    {
+        inst.instruction = JALR;
+
+        inst.rdest = 0;
+        inst.rs1 = 1;
     }
     else
     {

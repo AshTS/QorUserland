@@ -231,6 +231,7 @@ Token interpret_token(char* token, char* filename, size_t line_number, size_t co
         (
             strcmp(token, "lui") == 0 ||
             strcmp(token, "jal") == 0 ||
+            strcmp(token, "jalr") == 0 ||
             strcmp(token, "beq") == 0 ||
             strcmp(token, "bne") == 0 ||
             strcmp(token, "blt") == 0 ||
@@ -259,6 +260,8 @@ Token interpret_token(char* token, char* filename, size_t line_number, size_t co
             strcmp(token, "ecall") == 0 ||
             strcmp(token, "li") == 0 ||
             strcmp(token, "la") == 0 ||
+            strcmp(token, "call") == 0 ||
+            strcmp(token, "ret") == 0 ||
             strcmp(token, "j") == 0
         )
     {

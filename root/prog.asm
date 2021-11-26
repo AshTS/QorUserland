@@ -19,11 +19,11 @@ print_num:
     li a0, 1
     li a2, 1
     ecall
-    j exit
+    ret
 
 _start:
     li a0, 5
-    j print_num
+    call print_num
 exit:
     li a7, 60
     li a0, 0
