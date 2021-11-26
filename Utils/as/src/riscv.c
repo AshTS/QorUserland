@@ -1,8 +1,7 @@
 #include "riscv.h"
 
 #include <libc/assert.h>
-
-#include "stdio.h"
+#include <libc/stdio.h>
 
 char* render_instruction(struct Instruction* inst)
 {
