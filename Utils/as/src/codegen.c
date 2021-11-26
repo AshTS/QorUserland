@@ -142,10 +142,20 @@ void settings_add_section(struct GenerationSettings* settings, char* name)
         settings_expand_sections(settings);
     }
 
+    if (strcmp(name, ".text") == 0)
+    {
+        settings->current_addr = 0x8000000;
+    }
+    else if (strcmp(name, ".data") == 0)
+    {
+        settings->current_addr = 0x4000000;
+    }
+
     settings->sections[settings->sections_i].buffer = 0;
     settings->sections[settings->sections_i].buffer_len = 0;
     settings->sections[settings->sections_i].vaddr = settings->current_addr;
     settings->sections[settings->sections_i].length = 0;
+    settings->sections[settings->sections_i].align = 1;
 
     settings->sections[settings->sections_i++].name = name;
 }
@@ -209,15 +219,16 @@ bool settings_add_to_current(struct GenerationSettings* settings, void* data, si
 
 bool settings_add_instruction(struct GenerationSettings* settings, struct Instruction* inst, Location loc)
 {
+    if (settings->sections_i == 0)
+    {
+        return false;
+    }
+
     struct OutputSection sect = settings->sections[settings->sections_i - 1];
 
-    if (inst->j_link)
+    if (inst->link_type != NONE)
     {
-        linking_add_link(settings->linking, sect.name, inst->link, loc, sect.length, JUMP_LINK);
-    }
-    else if (inst->b_link)
-    {
-        linking_add_link(settings->linking, sect.name, inst->link, loc, sect.length, BRANCH_LINK);
+        linking_add_link(settings->linking, sect.name, inst->link, loc, sect.length, inst->link_type);
     }
 
     uint32_t compiled = compile_instruction(inst);
@@ -252,4 +263,21 @@ bool settings_get_section(struct GenerationSettings* settings, char* name, size_
     }
 
     return false;
+}
+
+bool settings_align(struct GenerationSettings* settings, size_t alignment)
+{
+    if (settings->sections_i == 0)
+    {
+        return false;
+    }
+
+    struct OutputSection* sect = &(settings->sections[settings->sections_i - 1]);
+
+    sect->align = alignment;
+
+    sect->vaddr = sect->vaddr + (alignment - (sect->vaddr % alignment)) % alignment;
+    settings->current_addr = settings->current_addr + (alignment - (settings->current_addr % alignment)) % alignment;
+
+    return true;
 }

@@ -6,10 +6,19 @@
 
 #include "argparse.h"
 
+#include "generic.h"
 #include "parser.h"
 #include "codegen.h"
 #include "riscv.h"
 #include "elf.h"
+
+#define DEBUG
+
+#ifdef DEBUG
+bool SHOW_DEBUG = true;
+#else
+bool SHOW_DEBUG = false;
+#endif
 
 void show_usage(char*);
 int assemble_file(char*);
@@ -18,6 +27,10 @@ struct GenerationSettings* generate(Token* tokens, size_t count, size_t* section
 
 int main(int argc, char** argv)
 {
+    #ifdef DEBUG
+    printf("Debug Build\n");
+    #endif
+
     // Parse command line arguments
     struct Arguments args;
     assert(!arg_parse(&args, argc, argv));
@@ -28,6 +41,8 @@ int main(int argc, char** argv)
         show_usage(argv[0]);
         return 0;
     }
+
+    SHOW_DEBUG = SHOW_DEBUG || (arg_check_long(&args, "verbose") || arg_check_short(&args, 'V'));
 
     // Get the files to assemble from the command line
     char** files_to_assemble = arg_get_free(&args);
@@ -56,11 +71,12 @@ void show_usage(char* prog_name)
     printf("Usage: %s [OPTIONS] ... [FILE] ...\n", prog_name);
     printf(" Assemble a RISC-V assembly file into an executable\n\n");
     printf("       -h --help          Show the usage\n");
+    printf("       -V --verbose       Enable debugging output");
 }
 
 int assemble_file(char* filename)
 {
-    printf("Assemble file `%s`\n", filename);
+    DEBUG_PRINTF("Assemble file `%s`\n", filename);
 
     errno = 0;
     FILE* file = fopen(filename, "r");
@@ -93,25 +109,39 @@ int assemble_file(char* filename)
 
     size_t section_count;
 
+    if (tokens == NULL)
+    {
+        return 1;
+    }
+
     struct GenerationSettings* result = generate(tokens, count, &section_count);
+
+    bool fail = false;
 
     if (link(result))
     {
-        write_to_elf(result, "a.out");
-    };
+        if (!write_to_elf(result, "a.out"))
+        {
+            fail = true;
+        }
+    }
+    else
+    {
+        fail = true;
+    }
 
     free(tokens);
     
     settings_alloc_free(result);
 
-    return 0;
+    return fail;
 }
 
 struct GenerationSettings* generate(Token* tokens, size_t count, size_t* section_count)
 {
     for (size_t i = 0; i < count; i++)
     {
-        // printf("%s\n", render_token(&tokens[i]));
+        printf("%s\n", render_token(&tokens[i]));
     }
 
     struct Instruction inst; 

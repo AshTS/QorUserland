@@ -5,15 +5,18 @@
 #include <libc/stdio.h>
 #include <libc/string.h>
 
+#include "generic.h"
+#include "linking.h"
+
 bool link(struct GenerationSettings* settings)
 {
-    printf("\nLinks: %ld\n", settings->linking->link_i);
+    DEBUG_PRINTF("\nLinks: %ld\n", settings->linking->link_i);
     
     for (size_t i = 0; i < settings->linking->link_i; i++)
     {
         struct Link link = settings->linking->links[i];
 
-        printf("Link: %10s+%p : %s (%s)\n", link.section, (void*)link.offset, link.symbol, link.type == JUMP_LINK ? "JUMP" : "BRANCH");
+        DEBUG_PRINTF("Link: %10s+%p : %s (%s)\n", link.section, (void*)link.offset, link.symbol, linking_type_str(link.type));
 
         size_t addr;
         size_t index;
@@ -39,10 +42,27 @@ bool link(struct GenerationSettings* settings)
         {
             offset &= ~1;
             
-            value |= ((offset >> 12) & 0b1111111) << 12;
+            value |= ((offset >> 12) & 0b11111111) << 12;
             value |= ((offset >> 11) & 0b1) << 20;
             value |= ((offset >> 1) & 0b1111111111) << 21;
             value |= ((offset >> 20) & 0b1) << 31;
+        }
+        else if (link.type == IMMEDIATE_LINK)
+        {
+            value |= (addr & 0b111111111111) << 20;
+        }
+        else if (link.type == UPPER_IMMEDIATE_LINK)
+        {
+            value |= addr & 0b11111111111111111111000000000000;
+        }
+        else if (link.type == BRANCH_LINK)
+        {
+            offset &= ~1;
+            
+            value |= ((offset >> 5) & 0b11111) << 25;
+            value |= ((offset >> 11) & 0b1) << 7;
+            value |= ((offset >> 1) & 0b1111) << 8;
+            value |= ((offset >> 12) & 0b1) << 31;
         }
         else
         {
@@ -57,19 +77,22 @@ bool link(struct GenerationSettings* settings)
 
 bool write_to_elf(struct GenerationSettings* settings, char* name)
 {
-    printf("\nLabels: %ld\n", settings->labels_i);
-    printf("Sections: %ld\n", settings->sections_i);
-
-    for (size_t i = 0; i < settings->labels_i; i++)
+    if (SHOW_DEBUG)
     {
-        printf("Label: %15s: %p\n", settings->labels[i].label, settings->labels[i].addr);
-    }
+        printf("\nLabels: %ld\n", settings->labels_i);
+        printf("Sections: %ld\n", settings->sections_i);
 
-    for (size_t i = 0; i < settings->sections_i; i++)
-    {
-        printf("\n");
+        for (size_t i = 0; i < settings->labels_i; i++)
+        {
+            printf("Label: %15s: %p\n", settings->labels[i].label, settings->labels[i].addr);
+        }
 
-        dump_section(settings->sections + i);
+        for (size_t i = 0; i < settings->sections_i; i++)
+        {
+            printf("\n");
+
+            dump_section(settings->sections + i);
+        }
     }
 
     struct ElfHeader header;
@@ -122,6 +145,8 @@ bool write_to_elf(struct GenerationSettings* settings, char* name)
     {
         struct OutputSection* sect = settings->sections + i;
 
+        walk += (sect->align - (walk % sect->align)) % sect->align;
+
         walk += sect->length;
     }
 
@@ -152,6 +177,8 @@ bool write_to_elf(struct GenerationSettings* settings, char* name)
 
         struct ProgramHeader prog;
 
+        walk += (sect->align - (walk % sect->align)) % sect->align;
+
         prog.p_type = 0x00000001;
         prog.p_flags = 0b101;
         prog.p_offset = walk;
@@ -172,9 +199,24 @@ bool write_to_elf(struct GenerationSettings* settings, char* name)
         walk += sect->length;
     }
 
+    walk = after_prog_headers;
     for (size_t i = 0; i < settings->sections_i; i++)
     {
         struct OutputSection* sect = settings->sections + i;
+
+        size_t align_offset = (sect->align - (walk % sect->align)) % sect->align;
+        walk += align_offset;
+
+        if (align_offset != 0)
+        {
+            size_t result = fwrite("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 1, align_offset, f);
+            if (result == 0 || errno > 0)
+            {
+                printf("%i\n", errno);
+                printf("Unable to write to file `%s`: %s\n", name, strerror(errno));
+                return false;
+            }
+        }
 
         size_t result = fwrite(sect->buffer, 1, sect->length, f);
         if (result == 0 || errno > 0)
@@ -183,6 +225,8 @@ bool write_to_elf(struct GenerationSettings* settings, char* name)
             printf("Unable to write to file `%s`: %s\n", name, strerror(errno));
             return false;
         }
+
+        walk += sect->length;
     }
     
     result = fwrite("\0.shstrtab", 1, 11, f);
@@ -254,6 +298,8 @@ bool write_to_elf(struct GenerationSettings* settings, char* name)
         struct OutputSection* sect = settings->sections + i;
 
         struct SectionHeader secth;
+
+        walk += (sect->align - (walk % sect->align)) % sect->align;
     
         secth.sh_name = name_offset;
         secth.sh_type = 1;

@@ -54,3 +54,21 @@ void linking_add_link(struct LinkingObject* obj, char* section, char* symbol, Lo
 
     obj->links[obj->link_i++] = (struct Link){.section = section, .symbol = symbol, .offset = offset, .type = type, .loc = loc};
 }
+
+
+char* linking_type_str(enum LinkingType lt)
+{
+    switch (lt)
+    {
+        case JUMP_LINK:
+            return "JMP";
+        case BRANCH_LINK:
+            return "BRANCH";
+        case IMMEDIATE_LINK:
+            return "IMM";
+        case UPPER_IMMEDIATE_LINK:
+            return "UIMM";
+        default:
+            return "default";
+    }
+}

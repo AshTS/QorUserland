@@ -115,6 +115,10 @@ char* render_token(Token* token)
             count = sprintf(BUFFER, "Number(%ld)", token->data.num);
             assert(count < buf_len);
             break;
+        case STRING:
+            count = sprintf(BUFFER, "String(%s)", token->data.str);
+            assert(count < buf_len);
+            break;
         case EOF:
             count = sprintf(BUFFER, "EOF");
             assert(count < buf_len);
@@ -210,10 +214,55 @@ Token interpret_token(char* token, char* filename, size_t line_number, size_t co
         {
             return token_str_type(DIRECTIVE, token, filename, line_number, column);
         }
+        else if (strcmp(token, ".align") == 0)
+        {
+            return token_str_type(DIRECTIVE, token, filename, line_number, column);
+        }
+        else if (strcmp(token, ".bytes") == 0)
+        {
+            return token_str_type(DIRECTIVE, token, filename, line_number, column);
+        }
         else
         {
             return token_str_type(IDENTIFIER, token, filename, line_number, column);
         }
+    }
+    else if 
+        (
+            strcmp(token, "lui") == 0 ||
+            strcmp(token, "jal") == 0 ||
+            strcmp(token, "beq") == 0 ||
+            strcmp(token, "bne") == 0 ||
+            strcmp(token, "blt") == 0 ||
+            strcmp(token, "bge") == 0 ||
+            strcmp(token, "gltu") == 0 ||
+            strcmp(token, "bgeu") == 0 ||
+            strcmp(token, "addi") == 0 ||
+            strcmp(token, "slti") == 0 ||
+            strcmp(token, "sltiu") == 0 ||
+            strcmp(token, "xori") == 0 ||
+            strcmp(token, "ori") == 0 ||
+            strcmp(token, "andi") == 0 ||
+            strcmp(token, "slli") == 0 ||
+            strcmp(token, "srli") == 0 ||
+            strcmp(token, "srai") == 0 ||
+            strcmp(token, "add") == 0 ||
+            strcmp(token, "sub") == 0 ||
+            strcmp(token, "sll") == 0 ||
+            strcmp(token, "slt") == 0 ||
+            strcmp(token, "sltu") == 0 ||
+            strcmp(token, "xor") == 0 ||
+            strcmp(token, "srl") == 0 ||
+            strcmp(token, "sra") == 0 ||
+            strcmp(token, "or") == 0 ||
+            strcmp(token, "and") == 0 ||
+            strcmp(token, "ecall") == 0 ||
+            strcmp(token, "li") == 0 ||
+            strcmp(token, "la") == 0 ||
+            strcmp(token, "j") == 0
+        )
+    {
+        return token_str_type(INSTRUCTION, token, filename, line_number, column);
     }
     else if (*token == 'x')
     {
@@ -270,10 +319,6 @@ Token interpret_token(char* token, char* filename, size_t line_number, size_t co
         {
             return token_num_type(REGISTER, num + 10, filename, line_number, column);
         }
-        else if (strcmp(token, "addi") == 0)
-        {
-            return token_str_type(INSTRUCTION, token, filename, line_number, column);
-        }
 
         return token_str_type(IDENTIFIER, token, filename, line_number, column);
     }
@@ -292,22 +337,6 @@ Token interpret_token(char* token, char* filename, size_t line_number, size_t co
     else if (strcmp(token, "fp") == 0)
     {
         return token_num_type(REGISTER, 8, filename, line_number, column);
-    }
-    else if (strcmp(token, "ecall") == 0)
-    {
-        return token_str_type(INSTRUCTION, token, filename, line_number, column);
-    }
-    else if (strcmp(token, "jal") == 0)
-    {
-        return token_str_type(INSTRUCTION, token, filename, line_number, column);
-    }
-    else if (strcmp(token, "j") == 0)
-    {
-        return token_str_type(INSTRUCTION, token, filename, line_number, column);
-    }
-    else if (strcmp(token, "li") == 0)
-    {
-        return token_str_type(INSTRUCTION, token, filename, line_number, column);
     }
     else
     {
@@ -329,8 +358,6 @@ char* min_ptr(char* a, char* b)
 
 Token* tokenize_buffer(char* buffer, char* filename, size_t* count)
 {
-    // char* get_next_line(char* buffer, size_t* line_number)
-
     size_t token_buffer_size = 1;
     *count = 0;
     Token* token_buffer = malloc(sizeof(Token) * token_buffer_size);
@@ -340,38 +367,77 @@ Token* tokenize_buffer(char* buffer, char* filename, size_t* count)
 
     while (current_line)
     {
-        char* tok = strtok(current_line, " ");
+        char* current_element = current_line;
+        char* str_next = NULL;
 
-        while (tok)
+        size_t len;
+        bool repeat = true;
+
+        while (repeat)
         {
-            char* ptr;
-            size_t len;
-            while (1)
+            len = strcspn(current_element, "\"");
+            if (!*(current_element + len))
             {
-                len = strcspn(tok, ":,");
-
-                if (!*(tok + len))
+                repeat = false;
+                str_next = NULL;
+            }
+            else
+            {
+                *(current_element + len) = 0;
+                str_next = current_element + len + 1;
+            }
+            
+            char* tok = strtok(current_element, " ");
+            while (tok)
+            {
+                char* ptr;
+                size_t len;
+                while (1)
                 {
-                    break;
+                    len = strcspn(tok, ":,");
+
+                    if (!*(tok + len))
+                    {
+                        break;
+                    }
+
+                    ptr = tok + len;
+
+                    char symbol = *ptr;
+                    *ptr = 0;
+
+                    ADD_TOKEN(interpret_token(tok, filename, line_number, 1 + tok - current_line));
+                    ADD_TOKEN(token_char_type(SYMBOL, symbol, filename, line_number, 1 + ptr - current_line));
+
+                    tok = ptr + 1;
                 }
 
-                ptr = tok + len;
+                if (*tok != 0)
+                {
+                    ADD_TOKEN(interpret_token(tok, filename, line_number, 1 + tok - current_line));
+                }
 
-                char symbol = *ptr;
-                *ptr = 0;
-
-                ADD_TOKEN(interpret_token(tok, filename, line_number, 1 + tok - current_line));
-                ADD_TOKEN(token_char_type(SYMBOL, symbol, filename, line_number, 1 + ptr - current_line));
-
-                tok = ptr + 1;
+                tok = strtok(NULL, " ");
             }
 
-            if (*tok != 0)
+            if (str_next != NULL)
             {
-                ADD_TOKEN(interpret_token(tok, filename, line_number, 1 + tok - current_line));
-            }
+                len = strcspn(str_next, "\"");
 
-            tok = strtok(NULL, " ");
+                if (!*(str_next + len))
+                {
+                    printf("ERROR: Unexpected end of line while parsing string at %s\n", render_location(&LOCATION(filename, line_number, 1 + str_next + len - current_line)));
+
+                    free(token_buffer);
+
+                    return NULL;
+                }
+
+                *(str_next + len) = 0;
+                current_element = str_next + len + 1;
+
+                ADD_TOKEN(token_str_type(STRING, str_next, filename, line_number, 1 + str_next - current_line));
+            }
         }
 
         current_line = get_next_line(NULL, &line_number);

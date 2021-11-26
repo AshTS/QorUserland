@@ -18,6 +18,7 @@ struct OutputSection
     uint64_t vaddr;
 
     size_t length;
+    size_t align;
 };
 
 struct LabelAddress
@@ -55,6 +56,7 @@ bool settings_get_section(struct GenerationSettings*, char* name, size_t* index)
 void settings_alloc_free(struct GenerationSettings*);
 bool settings_add_to_current(struct GenerationSettings*, void*, size_t);
 bool settings_add_instruction(struct GenerationSettings*, struct Instruction*, Location);
+bool settings_align(struct GenerationSettings*, size_t alignment);
 
 void dump_section(struct OutputSection*);
 

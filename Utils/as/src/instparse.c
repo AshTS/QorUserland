@@ -17,6 +17,7 @@ static char ERROR_BUF[ERROR_BUF_LEN];
 #define BUILD_ERROR_TEXT(pat, ...) ( sprintf(ERROR_BUF, pat, __VA_ARGS__), ERROR_BUF)
 
 char* expect_identifier(struct Token** tokens, struct ParsingError* error);
+char* expect_string(struct Token** tokens, struct ParsingError* error);
 char* expect_instruction(struct Token** tokens, struct ParsingError* error);
 int expect_register(struct Token** tokens, struct ParsingError* error);
 bool expect_symbol(struct Token** tokens, struct ParsingError* error, char c);
@@ -39,10 +40,63 @@ bool parse_code(struct Token** tokens, struct GenerationSettings* settings, stru
 
                 char* name = expect_identifier(tokens, error);
                 if (name == 0) return false;
-
                 CONSUME_TOKEN(tokens);
 
                 settings_add_section(settings, name);
+                
+                return true;
+            }
+            else if (strcmp((tokens[0][0].data.str), ".align") == 0)
+            {
+                CONSUME_TOKEN(tokens);
+
+                size_t number;
+                if (!expect_number(tokens, error, &number)) return false;
+                CONSUME_TOKEN(tokens);
+
+                if (!settings_align(settings, number))
+                {
+                    error->error_text = "Unable to align undefined segment";
+                    return false;
+                }
+                
+                return true;
+            }
+            else if (strcmp((tokens[0][0].data.str), ".bytes") == 0)
+            {
+                CONSUME_TOKEN(tokens);
+
+                while (1)
+                {
+                    if (tokens[0][0].type == NUMBER)
+                    {
+                        size_t number;
+                        if (!expect_number(tokens, error, &number)) return false;
+                        CONSUME_TOKEN(tokens);
+
+                        if (!settings_add_to_current(settings, &number, 1))
+                        {
+                            error->error_text = "Unable to add data to undefined segment";
+                            return false;
+                        }
+                    }
+                    else if (tokens[0][0].type == STRING)
+                    {
+                        char* name = expect_string(tokens, error);
+                        if (name == 0) return false;
+                        CONSUME_TOKEN(tokens);
+
+                        if (!settings_add_to_current(settings, name, strlen(name)))
+                        {
+                            error->error_text = "Unable to add data to undefined segment";
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
                 
                 return true;
             }
@@ -110,6 +164,37 @@ bool parse_rri(struct Token** tokens, struct Instruction* inst, struct ParsingEr
     return true;
 }
 
+bool parse_rrr(struct Token** tokens, struct Instruction* inst, struct ParsingError* error)
+{
+    inst->rdest = expect_register(tokens, error);
+    CONSUME_TOKEN(tokens);
+    if (inst->rdest < 0) return false;
+
+    if (!expect_symbol(tokens, error, ','))
+    {
+        CONSUME_TOKEN(tokens);
+        return false;
+    }
+    CONSUME_TOKEN(tokens);
+
+    inst->rs1 = expect_register(tokens, error);
+    CONSUME_TOKEN(tokens);
+    if (inst->rs1 < 0) return false;
+
+    if (!expect_symbol(tokens, error, ','))
+    {
+        CONSUME_TOKEN(tokens);
+        return false;
+    }
+    CONSUME_TOKEN(tokens);
+
+    inst->rs2 = expect_register(tokens, error);
+    CONSUME_TOKEN(tokens);
+    if (inst->rs2 < 0) return false;
+
+    return true;
+}
+
 bool parse_rzi(struct Token** tokens, struct Instruction* inst, struct ParsingError* error)
 {
     inst->rdest = expect_register(tokens, error);
@@ -135,11 +220,80 @@ bool parse_rzi(struct Token** tokens, struct Instruction* inst, struct ParsingEr
     return true;
 }
 
+bool parse_rz_ia(struct Token** tokens, struct Instruction* inst, struct ParsingError* error, Location* loc)
+{
+    inst->rdest = expect_register(tokens, error);
+    CONSUME_TOKEN(tokens);
+    if (inst->rdest < 0) return false;
+
+    if (!expect_symbol(tokens, error, ','))
+    {
+        CONSUME_TOKEN(tokens);
+        return false;
+    }
+    CONSUME_TOKEN(tokens);
+
+    inst->rs1 = 0;
+
+    if (tokens[0][0].type == IDENTIFIER)
+    {
+        inst->link = expect_identifier(tokens, error);
+        *loc = tokens[0][0].location;
+        CONSUME_TOKEN(tokens);
+        if (inst->link == 0) return false;
+        inst->link_type = IMMEDIATE_LINK;
+    }
+    else
+    {
+        if (!expect_number(tokens, error, &inst->imm))
+        {
+            CONSUME_TOKEN(tokens);
+            return false;
+        }
+        CONSUME_TOKEN(tokens);
+    }
+    
+
+    return true;
+}
+
 bool parse_ra(struct Token** tokens, struct Instruction* inst, struct ParsingError* error, Location* loc)
 {
     inst->rdest = expect_register(tokens, error);
     CONSUME_TOKEN(tokens);
     if (inst->rdest < 0) return false;
+
+    if (!expect_symbol(tokens, error, ','))
+    {
+        CONSUME_TOKEN(tokens);
+        return false;
+    }
+    CONSUME_TOKEN(tokens);
+
+    inst->link = expect_identifier(tokens, error);
+    *loc = tokens[0][0].location;
+    CONSUME_TOKEN(tokens);
+    if (inst->link == 0) return false;
+
+    return true;
+}
+
+bool parse_rra(struct Token** tokens, struct Instruction* inst, struct ParsingError* error, Location* loc)
+{
+    inst->rs1 = expect_register(tokens, error);
+    CONSUME_TOKEN(tokens);
+    if (inst->rs1 < 0) return false;
+
+    if (!expect_symbol(tokens, error, ','))
+    {
+        CONSUME_TOKEN(tokens);
+        return false;
+    }
+    CONSUME_TOKEN(tokens);
+
+    inst->rs2 = expect_register(tokens, error);
+    CONSUME_TOKEN(tokens);
+    if (inst->rs2 < 0) return false;
 
     if (!expect_symbol(tokens, error, ','))
     {
@@ -173,8 +327,29 @@ bool parse_instruction(struct Token** tokens, struct GenerationSettings* setting
     struct Instruction inst;
     Location identifier_loc;
 
-    inst.j_link = false;
-    inst.b_link = false;
+    inst.link_type = NONE;
+
+    #define RRI_COMMAND(s, INST) (strcmp(op, s) == 0) \
+    { \
+        inst.instruction = INST; \
+         \
+        if (!parse_rri(tokens, &inst, error)) return false; \
+    }
+
+    #define RRR_COMMAND(s, INST) (strcmp(op, s) == 0) \
+    { \
+        inst.instruction = INST; \
+         \
+        if (!parse_rrr(tokens, &inst, error)) return false; \
+    }
+
+    #define BRANCH_COMMAND(s, INST) (strcmp(op, s) == 0) \
+    { \
+        inst.instruction = INST; \
+        \
+        if (!parse_rra(tokens, &inst, error, &identifier_loc)) return false; \
+        inst.link_type = BRANCH_LINK; \
+    }
 
     char* op = expect_instruction(tokens, error);
     CONSUME_TOKEN(tokens);
@@ -184,31 +359,66 @@ bool parse_instruction(struct Token** tokens, struct GenerationSettings* setting
     {
         inst.instruction = ECALL;
     }
-    else if (strcmp(op, "addi") == 0)
-    {
-        inst.instruction = ADDI;
-        
-        if (!parse_rri(tokens, &inst, error)) return false;
-    }
+    else if RRI_COMMAND("addi", ADDI)
+    else if RRI_COMMAND("slti", SLTI)
+    else if RRI_COMMAND("sltiu", SLTIU)
+    else if RRI_COMMAND("xori", XORI)
+    else if RRI_COMMAND("ori", ORI)
+    else if RRI_COMMAND("andi", ANDI)
+    else if RRI_COMMAND("slli", SLLI)
+    else if RRI_COMMAND("slri", SRLI)
+    else if RRI_COMMAND("srai", SRAI)
+    else if RRR_COMMAND("add", ADD)
+    else if RRR_COMMAND("sub", SUB)
+    else if RRR_COMMAND("sll", SLL)
+    else if RRR_COMMAND("slt", SLT)
+    else if RRR_COMMAND("sltu", SLTU)
+    else if RRR_COMMAND("xor", XOR)
+    else if RRR_COMMAND("srl", SRL)
+    else if RRR_COMMAND("sra", SRA)
+    else if RRR_COMMAND("or", OR)
+    else if RRR_COMMAND("and", AND)
+    else if BRANCH_COMMAND("beq", BEQ)
+    else if BRANCH_COMMAND("bne", BNE)
+    else if BRANCH_COMMAND("blt", BLT)
+    else if BRANCH_COMMAND("bge", BGE)
+    else if BRANCH_COMMAND("bltu", BLTU)
+    else if BRANCH_COMMAND("bgeu", BGEU)
     else if (strcmp(op, "li") == 0)
     {
         inst.instruction = ADDI;
-        
+
         if (!parse_rzi(tokens, &inst, error)) return false;
+    }
+    else if (strcmp(op, "la") == 0)
+    {
+        inst.instruction = LUI;
+        inst.imm = 0;
+
+        if (!parse_ra(tokens, &inst, error, &identifier_loc)) return false;
+
+        inst.link_type = UPPER_IMMEDIATE_LINK;
+
+        if (!add_instruction(settings, error, &inst, identifier_loc)) return false;
+
+        inst.rs1 = inst.rdest;
+        inst.link_type = IMMEDIATE_LINK;
+
+        inst.instruction = ADDI;
     }
     else if (strcmp(op, "jal") == 0)
     {
         inst.instruction = JAL;
         
         if (!parse_ra(tokens, &inst, error, &identifier_loc)) return false;
-        inst.j_link = true;
+        inst.link_type = JUMP_LINK;
     }
     else if (strcmp(op, "j") == 0)
     {
         inst.instruction = JAL;
         
         if (!parse_za(tokens, &inst, error, &identifier_loc)) return false;
-        inst.j_link = true;
+        inst.link_type = JUMP_LINK;
     }
     else
     {
@@ -218,7 +428,7 @@ bool parse_instruction(struct Token** tokens, struct GenerationSettings* setting
 
     return add_instruction(settings, error, &inst, identifier_loc);
 }
-
+ 
 char* expect_identifier(struct Token** tokens, struct ParsingError* error)
 {
     if ((*tokens)[0].type == IDENTIFIER)
@@ -229,6 +439,20 @@ char* expect_identifier(struct Token** tokens, struct ParsingError* error)
     {
         error->loc = tokens[0][0].location;
         error->error_text = BUILD_ERROR_TEXT("Expected Identifier, got `%s`", render_token(tokens[0]));
+        return 0;
+    }
+}
+
+char* expect_string(struct Token** tokens, struct ParsingError* error)
+{
+    if ((*tokens)[0].type == STRING)
+    {
+        return tokens[0][0].data.str;
+    }
+    else
+    {
+        error->loc = tokens[0][0].location;
+        error->error_text = BUILD_ERROR_TEXT("Expected String, got `%s`", render_token(tokens[0]));
         return 0;
     }
 }
@@ -269,7 +493,7 @@ bool expect_symbol(struct Token** tokens, struct ParsingError* error, char c)
     }
 
     error->loc = tokens[0][0].location;
-    error->error_text = BUILD_ERROR_TEXT("Expected `:`, got `%s`", render_token(tokens[0]));
+    error->error_text = BUILD_ERROR_TEXT("Expected `%c`, got `%s`", c, render_token(tokens[0]));
 
     return false;
 }

@@ -8,8 +8,11 @@
 
 enum LinkingType
 {
+    NONE,
     JUMP_LINK,
-    BRANCH_LINK
+    BRANCH_LINK,
+    IMMEDIATE_LINK,
+    UPPER_IMMEDIATE_LINK
 };
 
 struct Link
@@ -33,5 +36,7 @@ struct LinkingObject* linking_alloc_new();
 void linking_alloc_free(struct LinkingObject*);
 void linking_expand_links(struct LinkingObject*);
 void linking_add_link(struct LinkingObject*, char*, char*, Location, size_t, enum LinkingType);
+
+char* linking_type_str(enum LinkingType);
 
 #endif // LINKING_H

@@ -32,6 +32,7 @@ enum TokenType
     SYMBOL,
     INSTRUCTION,
     NUMBER,
+    STRING,
     EOF
 };
 

@@ -4,11 +4,38 @@
 #include <libc/stdbool.h>
 #include <libc/stdint.h>
 
+#include "linking.h"
+
 enum RISCVInstruction
 {
+    LUI,
     JAL,
+    BEQ,
+    BNE,
+    BLT,
+    BGE,
+    BLTU,
+    BGEU,
     ADDI,
-    ECALL
+    SLTI,
+    SLTIU,
+    XORI,
+    ORI,
+    ANDI,
+    SLLI,
+    SRLI,
+    SRAI,
+    ADD,
+    SUB,
+    SLL,
+    SLT,
+    SLTU,
+    XOR,
+    SRL,
+    SRA,
+    OR,
+    AND,
+    ECALL,
 };
 
 struct Instruction
@@ -20,8 +47,7 @@ struct Instruction
 
     uint64_t imm;
 
-    bool j_link;
-    bool b_link;
+    enum LinkingType link_type;
 
     char* link;
 };
