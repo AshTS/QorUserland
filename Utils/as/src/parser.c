@@ -171,6 +171,11 @@ Token token_num_type(enum TokenType t, size_t num, char* filename, size_t line_n
 
 bool check_is_number(char* s)
 {
+    if (*s == '-')
+    {
+        s++;
+    }
+
     while (*s)
     {
         if (!(*s >= '0' && *s <= '9'))
@@ -187,6 +192,13 @@ bool check_is_number(char* s)
 long get_number(char* s)
 {
     long result = 0;
+    long mult = 1;
+
+    if (*s == '-')
+    {
+        mult = -1;
+        s++;
+    }
 
     while (*s)
     {
@@ -203,7 +215,7 @@ long get_number(char* s)
         s++;
     }
 
-    return result;
+    return result * mult;
 }
 
 Token interpret_token(char* token, char* filename, size_t line_number, size_t column)
@@ -232,6 +244,17 @@ Token interpret_token(char* token, char* filename, size_t line_number, size_t co
             strcmp(token, "lui") == 0 ||
             strcmp(token, "jal") == 0 ||
             strcmp(token, "jalr") == 0 ||
+            strcmp(token, "lb") == 0 ||
+            strcmp(token, "lh") == 0 ||
+            strcmp(token, "lw") == 0 ||
+            strcmp(token, "ld") == 0 ||
+            strcmp(token, "lbu") == 0 ||
+            strcmp(token, "lhu") == 0 ||
+            strcmp(token, "lwu") == 0 ||
+            strcmp(token, "sb") == 0 ||
+            strcmp(token, "sh") == 0 ||
+            strcmp(token, "sw") == 0 ||
+            strcmp(token, "sd") == 0 ||
             strcmp(token, "beq") == 0 ||
             strcmp(token, "bne") == 0 ||
             strcmp(token, "blt") == 0 ||
@@ -262,6 +285,8 @@ Token interpret_token(char* token, char* filename, size_t line_number, size_t co
             strcmp(token, "la") == 0 ||
             strcmp(token, "call") == 0 ||
             strcmp(token, "ret") == 0 ||
+            strcmp(token, "push") == 0 ||
+            strcmp(token, "pop") == 0 ||
             strcmp(token, "j") == 0
         )
     {
@@ -397,7 +422,7 @@ Token* tokenize_buffer(char* buffer, char* filename, size_t* count)
                 size_t len;
                 while (1)
                 {
-                    len = strcspn(tok, ":,");
+                    len = strcspn(tok, ":,()");
 
                     if (!*(tok + len))
                     {

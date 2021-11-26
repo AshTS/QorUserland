@@ -195,6 +195,47 @@ bool parse_rrr(struct Token** tokens, struct Instruction* inst, struct ParsingEr
     return true;
 }
 
+bool parse_rro(struct Token** tokens, struct Instruction* inst, struct ParsingError* error)
+{
+    inst->rs2 = expect_register(tokens, error);
+    CONSUME_TOKEN(tokens);
+    if (inst->rs2 < 0) return false;
+
+    if (!expect_symbol(tokens, error, ','))
+    {
+        CONSUME_TOKEN(tokens);
+        return false;
+    }
+    CONSUME_TOKEN(tokens);
+
+    if (!expect_number(tokens, error, &inst->imm))
+    {
+        CONSUME_TOKEN(tokens);
+        return false;
+    }
+    CONSUME_TOKEN(tokens);
+
+    if (!expect_symbol(tokens, error, '('))
+    {
+        CONSUME_TOKEN(tokens);
+        return false;
+    }
+    CONSUME_TOKEN(tokens);
+
+    inst->rs1 = expect_register(tokens, error);
+    CONSUME_TOKEN(tokens);
+    if (inst->rs1 < 0) return false;
+    
+    if (!expect_symbol(tokens, error, ')'))
+    {
+        CONSUME_TOKEN(tokens);
+        return false;
+    }
+    CONSUME_TOKEN(tokens);
+
+    return true;
+}
+
 bool parse_rzi(struct Token** tokens, struct Instruction* inst, struct ParsingError* error)
 {
     inst->rdest = expect_register(tokens, error);
@@ -343,6 +384,13 @@ bool parse_instruction(struct Token** tokens, struct GenerationSettings* setting
         if (!parse_rrr(tokens, &inst, error)) return false; \
     }
 
+    #define RRO_COMMAND(s, INST) (strcmp(op, s) == 0) \
+    { \
+        inst.instruction = INST; \
+         \
+        if (!parse_rro(tokens, &inst, error)) return false; \
+    }
+
     #define BRANCH_COMMAND(s, INST) (strcmp(op, s) == 0) \
     { \
         inst.instruction = INST; \
@@ -378,6 +426,17 @@ bool parse_instruction(struct Token** tokens, struct GenerationSettings* setting
     else if RRR_COMMAND("sra", SRA)
     else if RRR_COMMAND("or", OR)
     else if RRR_COMMAND("and", AND)
+    else if RRI_COMMAND("lb", LB)
+    else if RRI_COMMAND("lh", LH)
+    else if RRI_COMMAND("lw", LW)
+    else if RRI_COMMAND("lbu", LBU)
+    else if RRI_COMMAND("lhu", LHU)
+    else if RRI_COMMAND("lwu", LWU)
+    else if RRI_COMMAND("ld", LD)
+    else if RRO_COMMAND("sb", SB)
+    else if RRO_COMMAND("sh", SH)
+    else if RRO_COMMAND("sw", SW)
+    else if RRO_COMMAND("sd", SD)
     else if BRANCH_COMMAND("beq", BEQ)
     else if BRANCH_COMMAND("bne", BNE)
     else if BRANCH_COMMAND("blt", BLT)
@@ -435,6 +494,42 @@ bool parse_instruction(struct Token** tokens, struct GenerationSettings* setting
         inst.rdest = 1;
 
         inst.link_type = JUMP_LINK;
+    }
+    else if (strcmp(op, "push") == 0)
+    {
+        inst.instruction = SD;
+        
+        inst.rs2 = expect_register(tokens, error);
+        CONSUME_TOKEN(tokens);
+        if (inst.rs2 < 0) return false;
+
+        inst.rs1 = 2;
+        inst.imm = 0;
+        add_instruction(settings, error, &inst, identifier_loc);
+
+        inst.instruction = ADDI;
+
+        inst.rs1 = 2;
+        inst.rdest = 2;
+        inst.imm = 8;
+    }
+    else if (strcmp(op, "pop") == 0)
+    {
+        inst.instruction = ADDI;
+
+        inst.rs1 = 2;
+        inst.rdest = 2;
+        inst.imm = -8;
+        add_instruction(settings, error, &inst, identifier_loc);
+
+        inst.instruction = LD;
+        
+        inst.rdest = expect_register(tokens, error);
+        CONSUME_TOKEN(tokens);
+        if (inst.rdest < 0) return false;
+
+        inst.rs1 = 2;
+        inst.imm = 0;
     }
     else if (strcmp(op, "ret") == 0)
     {

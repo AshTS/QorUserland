@@ -121,6 +121,28 @@ uint32_t compile_instruction(struct Instruction* inst)
             return INSTRUCTION_BUILD(0b1101111, inst->rdest, 0, 0, 0, 0);
         case JALR:
             return INSTRUCTION_BUILD(0b1100111, inst->rdest, 0b000, inst->rs1, 0, 0);
+        case LB:
+            return INSTRUCTION_BUILD(0b0000011, inst->rdest, 0b000, inst->rs1, inst->imm, 0);
+        case LH:
+            return INSTRUCTION_BUILD(0b0000011, inst->rdest, 0b001, inst->rs1, inst->imm, 0);
+        case LW:
+            return INSTRUCTION_BUILD(0b0000011, inst->rdest, 0b010, inst->rs1, inst->imm, 0);
+        case LD:
+            return INSTRUCTION_BUILD(0b0000011, inst->rdest, 0b011, inst->rs1, inst->imm, 0);
+        case LBU:
+            return INSTRUCTION_BUILD(0b0000011, inst->rdest, 0b100, inst->rs1, inst->imm, 0);
+        case LHU:
+            return INSTRUCTION_BUILD(0b0000011, inst->rdest, 0b101, inst->rs1, inst->imm, 0);
+        case LWU:
+            return INSTRUCTION_BUILD(0b0000011, inst->rdest, 0b110, inst->rs1, inst->imm, 0);
+        case SB:
+            return INSTRUCTION_BUILD(0b0100011, inst->imm & 0b11111, 0b000, inst->rs1, inst->rs2, inst->imm >> 5);
+        case SH:
+            return INSTRUCTION_BUILD(0b0100011, inst->imm & 0b11111, 0b001, inst->rs1, inst->rs2, inst->imm >> 5);
+        case SW:
+            return INSTRUCTION_BUILD(0b0100011, inst->imm & 0b11111, 0b010, inst->rs1, inst->rs2, inst->imm >> 5);
+        case SD:
+            return INSTRUCTION_BUILD(0b0100011, inst->imm & 0b11111, 0b011, inst->rs1, inst->rs2, inst->imm >> 5);
         case BEQ:
             return INSTRUCTION_BUILD(0b1100011, 0, 0b000, inst->rs1, inst->rs2, 0);
         case BNE:
