@@ -24,7 +24,8 @@ int main(int argc, char** argv)
 {
     // Parse command line arguments
     struct Arguments args;
-    assert(!arg_parse(&args, argc, argv));
+    int arg_parse_result = arg_parse(&args, argc, argv);
+    assert(!arg_parse_result);
 
     // If the help has been requested, show the usage
     if (arg_check_long(&args, "help") || arg_check_short(&args, 'h'))

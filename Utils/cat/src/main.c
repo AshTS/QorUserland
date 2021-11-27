@@ -16,7 +16,8 @@ int main(int argc, char** argv)
 {
     // Parse command line arguments
     struct Arguments args;
-    assert(!arg_parse(&args, argc, argv));
+    int arg_parse_result = arg_parse(&args, argc, argv);
+    assert(!arg_parse_result);
 
     show_lines = arg_check_short(&args, 'n') || arg_check_long(&args, "number");
 

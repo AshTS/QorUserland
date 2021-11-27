@@ -15,7 +15,8 @@ int main(int argc, char** argv)
 {
     // Parse command line arguments
     struct Arguments args;
-    assert(!arg_parse(&args, argc, argv));
+    int arg_parse_result = arg_parse(&args, argc, argv);
+    assert(!arg_parse_result);
 
     // Get the arguments
     show_all = arg_check_short(&args, 'a') || arg_check_long(&args, "all");
