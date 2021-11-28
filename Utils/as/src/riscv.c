@@ -122,6 +122,46 @@ char* render_instruction(struct Instruction* inst)
         case BGEU:
             length = sprintf(buffer, "bgeu x%i, x%i, %s", inst->rs1, inst->rs2, inst->link);
             break;
+
+        case MUL:
+            length = sprintf(buffer, "mul x%i, x%i, x%i", inst->rdest, inst->rs1, inst->rs2);
+            break;
+        case MULH:
+            length = sprintf(buffer, "mulh x%i, x%i, x%i", inst->rdest, inst->rs1, inst->rs2);
+            break;
+        case MULHSU:
+            length = sprintf(buffer, "mulhsu x%i, x%i, x%i", inst->rdest, inst->rs1, inst->rs2);
+            break;
+        case MULHU:
+            length = sprintf(buffer, "mulhu x%i, x%i, x%i", inst->rdest, inst->rs1, inst->rs2);
+            break;
+        case DIV:
+            length = sprintf(buffer, "div x%i, x%i, x%i", inst->rdest, inst->rs1, inst->rs2);
+            break;
+        case DIVU:
+            length = sprintf(buffer, "divu x%i, x%i, x%i", inst->rdest, inst->rs1, inst->rs2);
+            break;
+        case REM:
+            length = sprintf(buffer, "rem x%i, x%i, x%i", inst->rdest, inst->rs1, inst->rs2);
+            break;
+        case REMU:
+            length = sprintf(buffer, "remu x%i, x%i, x%i", inst->rdest, inst->rs1, inst->rs2);
+            break;
+        case MULW:
+            length = sprintf(buffer, "mulw x%i, x%i, x%i", inst->rdest, inst->rs1, inst->rs2);
+            break;
+        case DIVW:
+            length = sprintf(buffer, "divw x%i, x%i, x%i", inst->rdest, inst->rs1, inst->rs2);
+            break;
+        case DIVUW:
+            length = sprintf(buffer, "divuw x%i, x%i, x%i", inst->rdest, inst->rs1, inst->rs2);
+            break;
+        case REMW:
+            length = sprintf(buffer, "remw x%i, x%i, x%i", inst->rdest, inst->rs1, inst->rs2);
+            break;
+        case REMUW:
+            length = sprintf(buffer, "remuw x%i, x%i, x%i", inst->rdest, inst->rs1, inst->rs2);
+            break;
         default:
             assert(0);
     }
@@ -239,6 +279,33 @@ uint32_t compile_instruction(struct Instruction* inst)
             return INSTRUCTION_BUILD(0b0111011, inst->rdest, 0b101, inst->rs1, inst->rs2, 0b0100000);
         case ECALL:
             return INSTRUCTION_BUILD(0b1110011, 0, 0, 0, 0, 0);
+
+        case MUL:
+            return INSTRUCTION_BUILD(0b0110011, inst->rdest, 0b000, inst->rs1, inst->rs2, 0b0000001);
+        case MULH:
+            return INSTRUCTION_BUILD(0b0110011, inst->rdest, 0b001, inst->rs1, inst->rs2, 0b0000001);
+        case MULHSU:
+            return INSTRUCTION_BUILD(0b0110011, inst->rdest, 0b010, inst->rs1, inst->rs2, 0b0000001);
+        case MULHU:
+            return INSTRUCTION_BUILD(0b0110011, inst->rdest, 0b011, inst->rs1, inst->rs2, 0b0000001);
+        case DIV:
+            return INSTRUCTION_BUILD(0b0110011, inst->rdest, 0b100, inst->rs1, inst->rs2, 0b0000001);
+        case DIVU:
+            return INSTRUCTION_BUILD(0b0110011, inst->rdest, 0b101, inst->rs1, inst->rs2, 0b0000001);
+        case REM:
+            return INSTRUCTION_BUILD(0b0110011, inst->rdest, 0b110, inst->rs1, inst->rs2, 0b0000001);
+        case REMU:
+            return INSTRUCTION_BUILD(0b0110011, inst->rdest, 0b111, inst->rs1, inst->rs2, 0b0000001);
+        case MULW:
+            return INSTRUCTION_BUILD(0b0111011, inst->rdest, 0b000, inst->rs1, inst->rs2, 0b0000001);
+        case DIVW:
+            return INSTRUCTION_BUILD(0b0111011, inst->rdest, 0b100, inst->rs1, inst->rs2, 0b0000001);
+        case DIVUW:
+            return INSTRUCTION_BUILD(0b0111011, inst->rdest, 0b101, inst->rs1, inst->rs2, 0b0000001);
+        case REMW:
+            return INSTRUCTION_BUILD(0b0111011, inst->rdest, 0b110, inst->rs1, inst->rs2, 0b0000001);
+        case REMUW:
+            return INSTRUCTION_BUILD(0b0111011, inst->rdest, 0b111, inst->rs1, inst->rs2, 0b0000001);
         default:
             printf("Unhandled Instruction `%s`\n", render_instruction(inst));
             assert(0 && "Not yet Implemented");

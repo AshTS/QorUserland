@@ -134,7 +134,7 @@ bool parse_rri(struct Token** tokens, struct Instruction* inst, struct ParsingEr
 {
     inst->rdest = expect_register(tokens, error);
     CONSUME_TOKEN(tokens);
-    if (inst->rdest < 0) return false;
+    if (inst->rdest > 31) return false;
 
     if (!expect_symbol(tokens, error, ','))
     {
@@ -145,7 +145,7 @@ bool parse_rri(struct Token** tokens, struct Instruction* inst, struct ParsingEr
 
     inst->rs1 = expect_register(tokens, error);
     CONSUME_TOKEN(tokens);
-    if (inst->rs1 < 0) return false;
+    if (inst->rs1 > 31) return false;
 
     if (!expect_symbol(tokens, error, ','))
     {
@@ -168,7 +168,7 @@ bool parse_rrr(struct Token** tokens, struct Instruction* inst, struct ParsingEr
 {
     inst->rdest = expect_register(tokens, error);
     CONSUME_TOKEN(tokens);
-    if (inst->rdest < 0) return false;
+    if (inst->rdest > 31) return false;
 
     if (!expect_symbol(tokens, error, ','))
     {
@@ -179,7 +179,7 @@ bool parse_rrr(struct Token** tokens, struct Instruction* inst, struct ParsingEr
 
     inst->rs1 = expect_register(tokens, error);
     CONSUME_TOKEN(tokens);
-    if (inst->rs1 < 0) return false;
+    if (inst->rs1 > 31) return false;
 
     if (!expect_symbol(tokens, error, ','))
     {
@@ -190,7 +190,7 @@ bool parse_rrr(struct Token** tokens, struct Instruction* inst, struct ParsingEr
 
     inst->rs2 = expect_register(tokens, error);
     CONSUME_TOKEN(tokens);
-    if (inst->rs2 < 0) return false;
+    if (inst->rs2 > 31) return false;
 
     return true;
 }
@@ -199,7 +199,7 @@ bool parse_rro(struct Token** tokens, struct Instruction* inst, struct ParsingEr
 {
     inst->rs2 = expect_register(tokens, error);
     CONSUME_TOKEN(tokens);
-    if (inst->rs2 < 0) return false;
+    if (inst->rs2 > 31) return false;
 
     if (!expect_symbol(tokens, error, ','))
     {
@@ -224,7 +224,7 @@ bool parse_rro(struct Token** tokens, struct Instruction* inst, struct ParsingEr
 
     inst->rs1 = expect_register(tokens, error);
     CONSUME_TOKEN(tokens);
-    if (inst->rs1 < 0) return false;
+    if (inst->rs1 > 31) return false;
     
     if (!expect_symbol(tokens, error, ')'))
     {
@@ -240,7 +240,7 @@ bool parse_rzi(struct Token** tokens, struct Instruction* inst, struct ParsingEr
 {
     inst->rdest = expect_register(tokens, error);
     CONSUME_TOKEN(tokens);
-    if (inst->rdest < 0) return false;
+    if (inst->rdest > 31) return false;
 
     if (!expect_symbol(tokens, error, ','))
     {
@@ -265,7 +265,7 @@ bool parse_rz_ia(struct Token** tokens, struct Instruction* inst, struct Parsing
 {
     inst->rdest = expect_register(tokens, error);
     CONSUME_TOKEN(tokens);
-    if (inst->rdest < 0) return false;
+    if (inst->rdest > 31) return false;
 
     if (!expect_symbol(tokens, error, ','))
     {
@@ -302,7 +302,7 @@ bool parse_ra(struct Token** tokens, struct Instruction* inst, struct ParsingErr
 {
     inst->rdest = expect_register(tokens, error);
     CONSUME_TOKEN(tokens);
-    if (inst->rdest < 0) return false;
+    if (inst->rdest > 31) return false;
 
     if (!expect_symbol(tokens, error, ','))
     {
@@ -323,7 +323,7 @@ bool parse_rra(struct Token** tokens, struct Instruction* inst, struct ParsingEr
 {
     inst->rs1 = expect_register(tokens, error);
     CONSUME_TOKEN(tokens);
-    if (inst->rs1 < 0) return false;
+    if (inst->rs1 > 31) return false;
 
     if (!expect_symbol(tokens, error, ','))
     {
@@ -334,7 +334,7 @@ bool parse_rra(struct Token** tokens, struct Instruction* inst, struct ParsingEr
 
     inst->rs2 = expect_register(tokens, error);
     CONSUME_TOKEN(tokens);
-    if (inst->rs2 < 0) return false;
+    if (inst->rs2 > 31) return false;
 
     if (!expect_symbol(tokens, error, ','))
     {
@@ -452,6 +452,19 @@ bool parse_instruction(struct Token** tokens, struct GenerationSettings* setting
     else if BRANCH_COMMAND("bge", BGE)
     else if BRANCH_COMMAND("bltu", BLTU)
     else if BRANCH_COMMAND("bgeu", BGEU)
+    else if RRR_COMMAND("mul", MUL)
+    else if RRR_COMMAND("mulh", MULH)
+    else if RRR_COMMAND("mulhsu", MULHSU)
+    else if RRR_COMMAND("mulhu", MULHU)
+    else if RRR_COMMAND("div", DIV)
+    else if RRR_COMMAND("divu", DIVU)
+    else if RRR_COMMAND("rem", REM)
+    else if RRR_COMMAND("remu", REMU)
+    else if RRR_COMMAND("mulw", MULW)
+    else if RRR_COMMAND("divw", DIVW)
+    else if RRR_COMMAND("divuw", DIVUW)
+    else if RRR_COMMAND("remw", REMW)
+    else if RRR_COMMAND("remuw", REMUW)
     else if (strcmp(op, "li") == 0)
     {
         inst.instruction = ADDI;
@@ -510,7 +523,7 @@ bool parse_instruction(struct Token** tokens, struct GenerationSettings* setting
         
         inst.rs2 = expect_register(tokens, error);
         CONSUME_TOKEN(tokens);
-        if (inst.rs2 < 0) return false;
+        if (inst.rs2 > 31) return false;
 
         inst.rs1 = 2;
         inst.imm = 0;
@@ -535,7 +548,7 @@ bool parse_instruction(struct Token** tokens, struct GenerationSettings* setting
         
         inst.rdest = expect_register(tokens, error);
         CONSUME_TOKEN(tokens);
-        if (inst.rdest < 0) return false;
+        if (inst.rdest > 31) return false;
 
         inst.rs1 = 2;
         inst.imm = 0;
@@ -608,7 +621,7 @@ int expect_register(struct Token** tokens, struct ParsingError* error)
     {
         error->loc = tokens[0][0].location;
         error->error_text = BUILD_ERROR_TEXT("Expected Register, got `%s`", render_token(tokens[0]));
-        return 0;
+        return -1;
     }
 }
 

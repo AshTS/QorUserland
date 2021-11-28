@@ -289,6 +289,19 @@ Token interpret_token(char* token, char* filename, size_t line_number, size_t co
             strcmp(token, "sra") == 0 ||
             strcmp(token, "or") == 0 ||
             strcmp(token, "and") == 0 ||
+            strcmp(token, "mul") == 0 ||
+            strcmp(token, "mulh") == 0 ||
+            strcmp(token, "mulhsu") == 0 ||
+            strcmp(token, "mulhu") == 0 ||
+            strcmp(token, "div") == 0 ||
+            strcmp(token, "divu") == 0 ||
+            strcmp(token, "rem") == 0 ||
+            strcmp(token, "remu") == 0 ||
+            strcmp(token, "mulw") == 0 ||
+            strcmp(token, "divw") == 0 ||
+            strcmp(token, "divuw") == 0 ||
+            strcmp(token, "remw") == 0 ||
+            strcmp(token, "remuw") == 0 ||
             strcmp(token, "ecall") == 0 ||
             strcmp(token, "li") == 0 ||
             strcmp(token, "la") == 0 ||

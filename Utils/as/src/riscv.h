@@ -8,6 +8,7 @@
 
 enum RISCVInstruction
 {
+    // RVI64
     LUI,
     JAL,
     JALR,
@@ -57,6 +58,21 @@ enum RISCVInstruction
     OR,
     AND,
     ECALL,
+
+    // RVM64
+    MUL,
+    MULH,
+    MULHSU,
+    MULHU,
+    DIV,
+    DIVU,
+    REM,
+    REMU,
+    MULW,
+    DIVW,
+    DIVUW,
+    REMW,
+    REMUW,
 };
 
 struct Instruction
