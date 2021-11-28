@@ -270,6 +270,15 @@ Token interpret_token(char* token, char* filename, size_t line_number, size_t co
             strcmp(token, "slli") == 0 ||
             strcmp(token, "srli") == 0 ||
             strcmp(token, "srai") == 0 ||
+            strcmp(token, "addiw") == 0 ||
+            strcmp(token, "slliw") == 0 ||
+            strcmp(token, "srliw") == 0 ||
+            strcmp(token, "sraiw") == 0 ||
+            strcmp(token, "addw") == 0 ||
+            strcmp(token, "subw") == 0 ||
+            strcmp(token, "sllw") == 0 ||
+            strcmp(token, "srlw") == 0 ||
+            strcmp(token, "sraw") == 0 ||
             strcmp(token, "add") == 0 ||
             strcmp(token, "sub") == 0 ||
             strcmp(token, "sll") == 0 ||

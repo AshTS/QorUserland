@@ -12,7 +12,7 @@
 #include "riscv.h"
 #include "elf.h"
 
-// #define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 bool SHOW_DEBUG = true;

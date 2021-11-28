@@ -38,6 +38,18 @@ char* render_instruction(struct Instruction* inst)
         case SRAI:
             length = sprintf(buffer, "srai x%i, x%i, %ld", inst->rdest, inst->rs1, inst->imm);
             break;
+        case ADDIW:
+            length = sprintf(buffer, "addiw x%i, x%i, %ld", inst->rdest, inst->rs1, inst->imm);
+            break;
+        case SLLIW:
+            length = sprintf(buffer, "slliw x%i, x%i, %ld", inst->rdest, inst->rs1, inst->imm);
+            break;
+        case SRLIW:
+            length = sprintf(buffer, "srliw x%i, x%i, %ld", inst->rdest, inst->rs1, inst->imm);
+            break;
+        case SRAIW:
+            length = sprintf(buffer, "sraiw x%i, x%i, %ld", inst->rdest, inst->rs1, inst->imm);
+            break;
         case ADD:
             length = sprintf(buffer, "add x%i, x%i, x%i", inst->rdest, inst->rs1, inst->rs2);
             break;
@@ -67,6 +79,21 @@ char* render_instruction(struct Instruction* inst)
             break;
         case AND:
             length = sprintf(buffer, "and x%i, x%i, x%i", inst->rdest, inst->rs1, inst->rs2);
+            break;
+        case ADDW:
+            length = sprintf(buffer, "addw x%i, x%i, x%i", inst->rdest, inst->rs1, inst->rs2);
+            break;
+        case SUBW:
+            length = sprintf(buffer, "subw x%i, x%i, x%i", inst->rdest, inst->rs1, inst->rs2);
+            break;
+        case SLLW:
+            length = sprintf(buffer, "sllw x%i, x%i, x%i", inst->rdest, inst->rs1, inst->rs2);
+            break;
+        case SRLW:
+            length = sprintf(buffer, "srlw x%i, x%i, x%i", inst->rdest, inst->rs1, inst->rs2);
+            break;
+        case SRAW:
+            length = sprintf(buffer, "sraw x%i, x%i, x%i", inst->rdest, inst->rs1, inst->rs2);
             break;
         case LUI:
             length = sprintf(buffer, "lui x%i, %ld", inst->rdest, inst->imm);
@@ -172,6 +199,14 @@ uint32_t compile_instruction(struct Instruction* inst)
             return INSTRUCTION_BUILD(0b0010011, inst->rdest, 0b111, inst->rs1, inst->imm & 0x3F, 0);
         case SRAI:
             return INSTRUCTION_BUILD(0b0010011, inst->rdest, 0b111, inst->rs1, inst->imm & 0x3F, 0b01000000);
+        case ADDIW:
+            return INSTRUCTION_BUILD(0b0011011, inst->rdest, 0b000, inst->rs1, inst->imm, 0);
+        case SLLIW:
+            return INSTRUCTION_BUILD(0b0011011, inst->rdest, 0b001, inst->rs1, inst->imm, 0);
+        case SRLIW:
+            return INSTRUCTION_BUILD(0b0011011, inst->rdest, 0b101, inst->rs1, inst->imm, 0);
+        case SRAIW:
+            return INSTRUCTION_BUILD(0b0011011, inst->rdest, 0b101, inst->rs1, inst->imm, 0b0100000);
         case ADD:
             return INSTRUCTION_BUILD(0b0110011, inst->rdest, 0b000, inst->rs1, inst->rs2, 0b0000000);
         case SUB:
@@ -192,6 +227,16 @@ uint32_t compile_instruction(struct Instruction* inst)
             return INSTRUCTION_BUILD(0b0110011, inst->rdest, 0b110, inst->rs1, inst->rs2, 0b0000000);
         case AND:
             return INSTRUCTION_BUILD(0b0110011, inst->rdest, 0b111, inst->rs1, inst->rs2, 0b0000000);
+        case ADDW:
+            return INSTRUCTION_BUILD(0b0111011, inst->rdest, 0b000, inst->rs1, inst->rs2, 0b0000000);
+        case SUBW:
+            return INSTRUCTION_BUILD(0b0111011, inst->rdest, 0b000, inst->rs1, inst->rs2, 0b0100000);
+        case SLLW:
+            return INSTRUCTION_BUILD(0b0111011, inst->rdest, 0b001, inst->rs1, inst->rs2, 0b0000000);
+        case SRLW:
+            return INSTRUCTION_BUILD(0b0111011, inst->rdest, 0b101, inst->rs1, inst->rs2, 0b0000000);
+        case SRAW:
+            return INSTRUCTION_BUILD(0b0111011, inst->rdest, 0b101, inst->rs1, inst->rs2, 0b0100000);
         case ECALL:
             return INSTRUCTION_BUILD(0b1110011, 0, 0, 0, 0, 0);
         default:
