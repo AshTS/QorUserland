@@ -12,7 +12,7 @@
 #include "riscv.h"
 #include "elf.h"
 
-// #define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 bool SHOW_DEBUG = true;
@@ -88,8 +88,8 @@ int assemble_file(char* filename)
         return 1;
     }
 
-    char buffer[1024];
-    int bytes_read = fread(buffer, 1, 1023, file);
+    char buffer[4096];
+    int bytes_read = fread(buffer, 1, 4095, file);
     if (errno > 0)
     {
         eprintf("Error: Unable to read file: %s\n", strerror(errno));
@@ -142,7 +142,7 @@ struct GenerationSettings* generate(Token* tokens, size_t count, size_t* section
 {
     for (size_t i = 0; i < count; i++)
     {
-        // printf("%s\n", render_token(&tokens[i]));
+        printf("%s\n", render_token(&tokens[i]));
     }
 
     struct Instruction inst; 

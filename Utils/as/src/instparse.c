@@ -414,7 +414,7 @@ bool parse_instruction(struct Token** tokens, struct GenerationSettings* setting
     else if RRI_COMMAND("ori", ORI)
     else if RRI_COMMAND("andi", ANDI)
     else if RRI_COMMAND("slli", SLLI)
-    else if RRI_COMMAND("slri", SRLI)
+    else if RRI_COMMAND("srli", SRLI)
     else if RRI_COMMAND("srai", SRAI)
     else if RRI_COMMAND("addiw", ADDIW)
     else if RRI_COMMAND("slliw", SLLIW)
@@ -519,11 +519,29 @@ bool parse_instruction(struct Token** tokens, struct GenerationSettings* setting
     }
     else if (strcmp(op, "push") == 0)
     {
+        inst.instruction = ADDI;
+
+        inst.rs1 = 2;
+        inst.rdest = 2;
+        inst.imm = -8;
+        add_instruction(settings, error, &inst, identifier_loc);
+
         inst.instruction = SD;
         
         inst.rs2 = expect_register(tokens, error);
         CONSUME_TOKEN(tokens);
         if (inst.rs2 > 31) return false;
+
+        inst.rs1 = 2;
+        inst.imm = 0;
+    }
+    else if (strcmp(op, "pop") == 0)
+    {
+        inst.instruction = LD;
+        
+        inst.rdest = expect_register(tokens, error);
+        CONSUME_TOKEN(tokens);
+        if (inst.rdest > 31) return false;
 
         inst.rs1 = 2;
         inst.imm = 0;
@@ -534,24 +552,6 @@ bool parse_instruction(struct Token** tokens, struct GenerationSettings* setting
         inst.rs1 = 2;
         inst.rdest = 2;
         inst.imm = 8;
-    }
-    else if (strcmp(op, "pop") == 0)
-    {
-        inst.instruction = ADDI;
-
-        inst.rs1 = 2;
-        inst.rdest = 2;
-        inst.imm = -8;
-        add_instruction(settings, error, &inst, identifier_loc);
-
-        inst.instruction = LD;
-        
-        inst.rdest = expect_register(tokens, error);
-        CONSUME_TOKEN(tokens);
-        if (inst.rdest > 31) return false;
-
-        inst.rs1 = 2;
-        inst.imm = 0;
     }
     else if (strcmp(op, "ret") == 0)
     {

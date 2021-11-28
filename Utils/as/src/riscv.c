@@ -236,9 +236,9 @@ uint32_t compile_instruction(struct Instruction* inst)
         case SLLI:
             return INSTRUCTION_BUILD(0b0010011, inst->rdest, 0b001, inst->rs1, inst->imm & 0x3F, 0);
         case SRLI:
-            return INSTRUCTION_BUILD(0b0010011, inst->rdest, 0b111, inst->rs1, inst->imm & 0x3F, 0);
+            return INSTRUCTION_BUILD(0b0010011, inst->rdest, 0b101, inst->rs1, inst->imm & 0x3F, 0);
         case SRAI:
-            return INSTRUCTION_BUILD(0b0010011, inst->rdest, 0b111, inst->rs1, inst->imm & 0x3F, 0b01000000);
+            return INSTRUCTION_BUILD(0b0010011, inst->rdest, 0b101, inst->rs1, inst->imm & 0x3F, 0b01000000);
         case ADDIW:
             return INSTRUCTION_BUILD(0b0011011, inst->rdest, 0b000, inst->rs1, inst->imm, 0);
         case SLLIW:

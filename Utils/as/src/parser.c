@@ -417,6 +417,17 @@ Token* tokenize_buffer(char* buffer, char* filename, size_t* count)
 
     while (current_line)
     {
+        // Remove any comments from the line
+        char* comment_loc = strchr(current_line, '/');
+
+        if (comment_loc != NULL)
+        {
+            if (*(comment_loc + 1) == '/')
+            {
+                *comment_loc = 0;
+            }
+        }
+
         char* current_element = current_line;
         char* str_next = NULL;
 
