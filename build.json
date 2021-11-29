@@ -69,6 +69,12 @@
         "output-path": "/bin/sync"
     },
     {
+        "name": "echo",
+        "make-path": "qor-userland/Utils/echo",
+        "bin-path": "qor-userland/Utils/echo/bin/echo",
+        "output-path": "/bin/echo"
+    },
+    {
         "name": "Editor",
         "make-path": "qor-userland/Utils/ed",
         "bin-path": "qor-userland/Utils/ed/bin/ed",
