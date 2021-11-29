@@ -68,19 +68,16 @@ void single_listener(char* dev, int f0)
     int cursor0[] = {1, 1};
     int cursor1[] = {1, 1};
 
-    char buffer[512];
+    char buffer[2048];
 
     while (1)
     {
         int amt;
-        amt = read(f0, buffer, 512);
+        amt = read(f0, buffer, 2048);
 
         if (amt > 0)
         {
             write(disp, buffer, amt);
-
-            close(disp);
-            disp = open(dev, O_WRONLY);
         }
     }
 }
@@ -204,7 +201,7 @@ int main(int argc, char** argv)
     int in0, in1, out0, out1, disp0, disp1;
 
     in0 = redirect_from(0);
-    out0 = redirect_to(1);
+    out0 = 1;
     disp0 = dup(1);
 
     int shell_pid = start_shell();
@@ -226,7 +223,7 @@ int main(int argc, char** argv)
         }
         else
         {
-            single_listener(device, out0);
+            return 0; // single_listener(device, out0);
         }
     }
 
