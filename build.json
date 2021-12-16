@@ -85,5 +85,11 @@
         "make-path": "qor-userland/Utils/as",
         "bin-path": "qor-userland/Utils/as/bin/as",
         "output-path": "/bin/as"
+    },
+    {
+        "name": "femto",
+        "make-path": "qor-userland/Utils/femto",
+        "bin-path": "qor-userland/Utils/femto/bin/femto",
+        "output-path": "/bin/femto"
     }
 ]

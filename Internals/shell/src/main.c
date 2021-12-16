@@ -80,7 +80,7 @@ int main()
         {
             continue;
         }
-
+        
         if (!WAITING)
         {
             printf("\n");
