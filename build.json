@@ -75,6 +75,12 @@
         "output-path": "/bin/echo"
     },
     {
+        "name": "pwd",
+        "make-path": "qor-userland/Utils/pwd",
+        "bin-path": "qor-userland/Utils/pwd/bin/pwd",
+        "output-path": "/bin/pwd"
+    },
+    {
         "name": "Editor",
         "make-path": "qor-userland/Utils/ed",
         "bin-path": "qor-userland/Utils/ed/bin/ed",
