@@ -1,5 +1,6 @@
 
 #include <libc/stdbool.h>
+#include <libc/errno.h>
 #include "libc/stdio.h"
 #include "libc/sys/syscalls.h"
 #include "libc/string.h"
@@ -11,6 +12,8 @@ char* PATH = "/bin/";
 static int RUNNING_PID = 0;
 static bool WAITING = true;
 static bool IS_TIMING = false;
+
+static bool SHOW_TAG = true;
 
 static int RETURN_CODE = 0;
 
@@ -41,11 +44,29 @@ void handler(int sig, struct siginfo_t *info, void *ucontext)
     sigreturn();
 }
 
-int main()
+bool read_line_from(int fd, char** line);
+
+int main(int argc, char** argv)
 {
     // Setup the handler for SIGINT
     struct sigaction new;
     struct sigaction old;
+
+    int input_fd = 0;
+
+    if (argc > 1)
+    {
+        // If a file is passed, then the shell is being used to execute a shell script
+        input_fd = open(argv[1], O_RDONLY);
+
+        if (input_fd < 0)
+        {
+            printf("Unable to open file `%s`: %s\n", argv[1], strerror(-input_fd));
+            return 1;
+        }
+
+        SHOW_TAG = false;
+    }
 
     new.sa_flags = SA_SIGINFO;
     new.sa_sigaction = handler;
@@ -55,35 +76,55 @@ int main()
     char* envp[1];
     envp[0] = 0;
 
-    char* argv[64];
-    argv[0] = 0;
+    char* this_argv[64];
+    this_argv[0] = 0;
 
     while (1)
     {
-        display_tag();
+        if (SHOW_TAG)
+        {
+            display_tag();
+        }
 
         WAITING = true;
 
-        char buffer[64];
+        char* buffer;
+        if (!read_line_from(input_fd, &buffer))
+        {
+            goto END;
+        }
+
+        /*
         while (WAITING)
         {
-            int count = read(0, buffer, 63);
+            int count = read(input_fd, buffer, 63);
 
-            if (count == 0) continue;
+            if (count == 0) goto END;
 
             buffer[count - 1] = 0;
 
             break;
-        }
+        }*/
 
         if (buffer[0] == 0)
         {
             continue;
         }
-        
+
+
         if (!WAITING)
         {
             printf("\n");
+            continue;
+        }
+
+        while (*buffer == ' ')
+        {
+            buffer++;
+        }
+
+        if (buffer[0] == '#')
+        {
             continue;
         }
 
@@ -132,7 +173,7 @@ int main()
 
         int buffer_index = 0;
         int argv_index = 0;
-        argv[0] = buffer;
+        this_argv[0] = buffer;
 
         while (buffer[buffer_index] != 0)
         {
@@ -140,33 +181,34 @@ int main()
             {
                 buffer[buffer_index] = 0;
 
-                if (*argv[argv_index] != 0)
+                if (*this_argv[argv_index] != 0)
                 {
                     argv_index++;
                 }
-                argv[argv_index] = &buffer[buffer_index + 1];
+                this_argv[argv_index] = &buffer[buffer_index + 1];
             }
             buffer_index++;
         }
 
-        argv[++argv_index] = 0;
+        this_argv[++argv_index] = 0;
 
-        if (*argv[0] == 0)
+        if (*this_argv[0] == 0)
         {
             continue;
         }
 
         if (do_time)
         {
-            run_exec_time(argv[0], argv, envp);
+            run_exec_time(this_argv[0], this_argv, envp);
         }
         else
         {
-            run_exec(argv[0], argv, envp);
+            run_exec(this_argv[0], this_argv, envp);
         }
     }
 
-    printf("Exiting Shell...\n");
+    END:
+    return 0;
 }
 
 void display_tag()
@@ -325,4 +367,43 @@ int run_exec_time(char* exec, char** argv, char** envp)
     printf("Average Runtime: %i ms\n", avg);
 
     return 0;
+}
+
+
+bool read_line_from(int fd, char** line)
+{
+    // TODO: This only accepts files up to one KiB, this needs to be fixed
+    static bool READ_NEXT = true;
+    static char BUFFER[1024];
+
+    char* ptr = NULL;
+
+    if (READ_NEXT)
+    {
+        int length = read(fd, BUFFER, 1023);
+
+        if (length == 0)
+        {
+            return false;
+        }
+
+        BUFFER[length] = 0;
+        ptr = BUFFER;
+
+        READ_NEXT = false;
+    }
+
+    char* token = strtok(ptr, "\n");
+
+    if (token == NULL)
+    {
+        READ_NEXT = true;
+        return read_line_from(fd, line);
+    }
+    else
+    {
+        *line = token;
+    }
+
+    return true;
 }
