@@ -26,32 +26,14 @@ void start_shell()
 
     execve("/bin/shell", argv, envp);
 }
-
-int redirect_from(int fd)
-{
-    int fds[2];
-    pipe(fds);
-
-    dup2(fds[0], fd);
-
-    return fds[1];
-}
-
-int redirect_to(int fd)
-{
-    int fds[2];
-    pipe(fds);
-
-    dup2(fds[1], fd);
-
-    return fds[0];
-}
-
 int main(int argc, char** argv)
 {
-    open("/dev/tty0", O_RDONLY);
-    open("/dev/tty0", O_RDONLY);
-    open("/dev/tty0", O_WRONLY);
+    int fd = open("/dev/tty0", O_RDONLY);
+    dup2(fd, 0);
+    fd = open("/dev/tty0", O_RDONLY);
+    dup2(fd, 1);
+    fd = open("/dev/tty0", O_RDONLY);
+    dup2(fd, 2);
 
     start_shell();
 }

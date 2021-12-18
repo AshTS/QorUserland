@@ -21,6 +21,12 @@
         "postbuild": ["cp qor-userland/Libraries/libgraphics/bin/libgraphics.a qor-userland/lib/libgraphics.a"]
     },
     {
+        "name": "init",
+        "make-path": "qor-userland/Internals/init",
+        "bin-path": "qor-userland/Internals/init/bin/init",
+        "output-path": "/bin/init"
+    },
+    {
         "name": "Shell",
         "make-path": "qor-userland/Internals/shell",
         "bin-path": "qor-userland/Internals/shell/bin/shell",
