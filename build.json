@@ -51,6 +51,12 @@
         "output-path": "/bin/gol"
     },
     {
+        "name": "Example Sort",
+        "make-path": "qor-userland/Examples/sort",
+        "bin-path": "qor-userland/Examples/sort/bin/ex-sort",
+        "output-path": "/bin/ex-sort"
+    },
+    {
         "name": "ls",
         "make-path": "qor-userland/Utils/ls",
         "bin-path": "qor-userland/Utils/ls/bin/ls",
