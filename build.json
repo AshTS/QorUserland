@@ -115,5 +115,11 @@
         "make-path": "qor-userland/Utils/femto",
         "bin-path": "qor-userland/Utils/femto/bin/femto",
         "output-path": "/bin/femto"
+    },
+    {
+        "name": "bmp",
+        "make-path": "qor-userland/Utils/bmp",
+        "bin-path": "qor-userland/Utils/bmp/bin/bmp",
+        "output-path": "/bin/bmp"
     }
 ]
