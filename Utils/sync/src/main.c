@@ -5,7 +5,7 @@ int main(int argc, char** argv)
 {
     printf("Syncing filesystem...\n");
 
-    if (sync())
+    if (sys_sync())
     {
         printf("Problem syncing filesystem\n");
         return 1;

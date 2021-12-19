@@ -1,6 +1,7 @@
 #include <libc/assert.h>
 #include <libc/stdio.h>
 #include <libc/dirent.h>
+#include <libc/stdlib.h>
 
 #include "argparse.h"
 

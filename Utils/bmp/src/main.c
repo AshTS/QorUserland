@@ -1,6 +1,7 @@
 #include <libc/errno.h>
 #include <libc/stdio.h>
 #include <libc/string.h>
+#include <libc/stdlib.h>
 
 #include <graphics.h>
 

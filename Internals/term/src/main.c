@@ -24,7 +24,7 @@ void start_shell()
 
     envp[0] = 0;
 
-    execve("/bin/shell", argv, envp);
+    sys_execve("/bin/shell", argv, envp);
 }
 int main(int argc, char** argv)
 {
@@ -32,12 +32,12 @@ int main(int argc, char** argv)
 
     envp[0] = 0;
 
-    int fd = open("/dev/tty0", O_RDONLY);
-    dup2(fd, 0);
-    fd = open("/dev/tty0", O_RDONLY);
-    dup2(fd, 1);
-    fd = open("/dev/tty0", O_RDONLY);
-    dup2(fd, 2);
+    int fd = sys_open("/dev/tty0", O_RDONLY);
+    sys_dup2(fd, 0);
+    fd = sys_open("/dev/tty0", O_RDONLY);
+    sys_dup2(fd, 1);
+    fd = sys_open("/dev/tty0", O_RDONLY);
+    sys_dup2(fd, 2);
 
     /*
     if (argc < 2)
@@ -45,5 +45,5 @@ int main(int argc, char** argv)
         start_shell();
     }
 */
-    execve(argv[1], argv + 1, envp);
+    sys_execve(argv[1], argv + 1, envp);
 }

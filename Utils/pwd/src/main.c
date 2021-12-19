@@ -23,7 +23,7 @@ int main(int argc, char** argv)
 
     char buffer[512];
 
-    int ret = getcwd(buffer, 511);
+    int ret = sys_getcwd(buffer, 511);
 
     if (ret < 0)
     {

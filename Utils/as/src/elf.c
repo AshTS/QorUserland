@@ -84,7 +84,7 @@ bool write_to_elf(struct GenerationSettings* settings, char* name)
 
         for (size_t i = 0; i < settings->labels_i; i++)
         {
-            printf("Label: %15s: %p\n", settings->labels[i].label, settings->labels[i].addr);
+            printf("Label: %15s: %x\n", settings->labels[i].label, (int)settings->labels[i].addr);
         }
 
         for (size_t i = 0; i < settings->sections_i; i++)

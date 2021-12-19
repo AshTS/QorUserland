@@ -31,7 +31,7 @@ int main(int argc, char** argv)
 
     while (*directory_names)
     {
-        if (mkdir(*directory_names, 0x1FF) < 0)
+        if (sys_mkdir(*directory_names, 0x1FF) < 0)
         {
             eprintf("Unable to create directory `%s`\n", *directory_names);
             return 1;

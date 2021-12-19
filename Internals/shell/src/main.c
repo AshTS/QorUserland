@@ -30,7 +30,7 @@ void handler(int sig, struct siginfo_t *info, void *ucontext)
 
     if (RUNNING_PID > 0)
     {
-        kill(RUNNING_PID, SIGINT);
+        sys_kill(RUNNING_PID, SIGINT);
         printf("\n");
     }
     else
@@ -41,7 +41,7 @@ void handler(int sig, struct siginfo_t *info, void *ucontext)
 
     IS_TIMING = false;
 
-    sigreturn();
+    sys_sigreturn();
 }
 
 bool read_line_from(int fd, char** line);
@@ -57,7 +57,7 @@ int main(int argc, char** argv)
     if (argc > 1)
     {
         // If a file is passed, then the shell is being used to execute a shell script
-        input_fd = open(argv[1], O_RDONLY);
+        input_fd = sys_open(argv[1], O_RDONLY);
 
         if (input_fd < 0)
         {
@@ -71,7 +71,7 @@ int main(int argc, char** argv)
     new.sa_flags = SA_SIGINFO;
     new.sa_sigaction = handler;
 
-    sigaction(SIGINT, &new, &old);
+    sys_sigaction(SIGINT, &new, &old);
 
     char* envp[1];
     envp[0] = 0;
@@ -150,7 +150,7 @@ int main(int argc, char** argv)
 
             path_buffer[j] = '\0';
 
-            if (chdir(path_buffer) == -1)
+            if (sys_chdir(path_buffer) == -1)
             {
                 eprintf("Unable to switch to `%s`\n", path_buffer);
             }
@@ -215,7 +215,7 @@ void display_tag()
 {
     char buffer[64];
 
-    int pos = getcwd(buffer, 63);
+    int pos = sys_getcwd(buffer, 63);
     buffer[pos] = 0;
 
     if (RETURN_CODE == 0)
@@ -265,7 +265,7 @@ int handle_redirect(char** argv)
         }
         else
         {
-            int fd = open(argv[i], O_CREAT | O_TRUNC | O_WRONLY);
+            int fd = sys_open(argv[i], O_CREAT | O_TRUNC | O_WRONLY);
 
             if (fd < 0)
             {
@@ -274,7 +274,7 @@ int handle_redirect(char** argv)
                 return -1;
             }
 
-            dup2(fd, 1);
+            sys_dup2(fd, 1);
 
             return fd;
         }
@@ -286,12 +286,12 @@ int handle_redirect(char** argv)
 
 int run_exec(char* exec, char** argv, char** envp)
 {
-    short pid = fork();
+    short pid = sys_fork();
 
     if (pid == 0)
     {
         // handle_redirect(argv);
-        execve(argv[0], (const char**)argv, (const char**)envp);
+        sys_execve(argv[0], (const char**)argv, (const char**)envp);
 
         if (argv[0][0] != '/')
         {
@@ -316,17 +316,17 @@ int run_exec(char* exec, char** argv, char** envp)
 
             next_buffer[i] = 0;
 
-            execve(next_buffer, (const char**)argv, (const char**)envp);
+            sys_execve(next_buffer, (const char**)argv, (const char**)envp);
         }
 
         eprintf("Unable to locate executable `%s`\n", argv[0]);
 
-        exit(-1);
+        sys_exit(-1);
     }
     else
     {
         RUNNING_PID = pid;
-        wait(&RETURN_CODE);
+        sys_wait(&RETURN_CODE);
         RUNNING_PID = 0;
 
         return 0;
@@ -341,7 +341,7 @@ int run_exec_time(char* exec, char** argv, char** envp)
     unsigned long start;
     unsigned long end;
 
-    int fd = open("/dev/rtc0", O_RDONLY);
+    int fd = sys_open("/dev/rtc0", O_RDONLY);
 
     if (fd < 0)
     {
@@ -349,7 +349,7 @@ int run_exec_time(char* exec, char** argv, char** envp)
         return -1;
     }
 
-    ioctl(fd, RTC_RD_TIMESTAMP, (unsigned long)&start);
+    sys_ioctl(fd, RTC_RD_TIMESTAMP, (unsigned long)&start);
 
     for (int i = 0; i < 10; IS_TIMING && i++)
     {
@@ -360,7 +360,7 @@ int run_exec_time(char* exec, char** argv, char** envp)
     }
     IS_TIMING = false;
 
-    ioctl(fd, RTC_RD_TIMESTAMP, (unsigned long)&end);
+    sys_ioctl(fd, RTC_RD_TIMESTAMP, (unsigned long)&end);
     
     int avg = (end - start) / 10 / 1000000;
 
@@ -380,7 +380,7 @@ bool read_line_from(int fd, char** line)
 
     if (READ_NEXT)
     {
-        int length = read(fd, BUFFER, 1023);
+        int length = sys_read(fd, BUFFER, 1023);
 
         if (length == 0)
         {

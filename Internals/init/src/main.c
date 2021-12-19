@@ -5,17 +5,17 @@
 #include <libc/stdlib.h>
 
 #define INIT_DIRECTORY "/etc/startup.d"
-#define KERNEL_LOG(...) { int lfd = open("/var/syslog", O_APPEND); raw_fprintf(lfd, __VA_ARGS__); close(lfd); }
+#define KERNEL_LOG(...) { int lfd = sys_open("/var/syslog", O_APPEND); raw_fprintf(lfd, __VA_ARGS__); sys_close(lfd); }
 
 void setup_stdio()
 {
-    int a = open("/dev/null", O_RDWR);
-    int b = open("/dev/fb0", O_RDWR);
-    int c = open("/dev/null", O_RDWR);
+    int a = sys_open("/dev/null", O_RDWR);
+    int b = sys_open("/dev/fb0", O_RDWR);
+    int c = sys_open("/dev/null", O_RDWR);
 
-    dup2(a, 0);
-    dup2(b, 1);
-    dup2(c, 2);
+    sys_dup2(a, 0);
+    sys_dup2(b, 1);
+    sys_dup2(c, 2);
 }
 
 int execute_process(char** argc, char** envp);
@@ -91,22 +91,22 @@ int main()
 
     closedir(directory);
 
-    sync();
+    sys_sync();
 }
 
 int execute_process(char** argv, char** envp)
 {
-    int child_pid = fork();
+    int child_pid = sys_fork();
 
     // As the child
     if (child_pid == 0)
     {
-        execve(argv[0], argv, envp);
-        exit(0);
+        sys_execve(argv[0], argv, envp);
+        sys_exit(0);
     }
 
     // As the parent
-    wait(0);
+    sys_wait(0);
 
     return child_pid;
 }

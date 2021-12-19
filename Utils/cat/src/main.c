@@ -3,6 +3,7 @@
 #include <libc/stdbool.h>
 #include <libc/stdio.h>
 #include <libc/string.h>
+#include <libc/stdlib.h>
 
 #include "argparse.h"
 

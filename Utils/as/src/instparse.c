@@ -127,6 +127,7 @@ bool parse_code(struct Token** tokens, struct GenerationSettings* settings, stru
     }
 
     assert(0 && "Unreachable");
+    return -1;
 }
 
 

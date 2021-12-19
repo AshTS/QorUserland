@@ -29,7 +29,7 @@ int verify_framebuffer()
 
 int init_framebuffer()
 {
-    FRAME_BUFFER_FD = open("/dev/fb0", O_WRONLY);
+    FRAME_BUFFER_FD = sys_open("/dev/fb0", O_WRONLY);
 
     if (FRAME_BUFFER_FD < 0)
     {
@@ -37,7 +37,7 @@ int init_framebuffer()
         return -1;
     }
 
-    frame_buffer = mmap(0, 640 * 480 * 4, PROT_READ | PROT_WRITE, 0, FRAME_BUFFER_FD, 0);
+    frame_buffer = sys_mmap(0, 640 * 480 * 4, PROT_READ | PROT_WRITE, 0, FRAME_BUFFER_FD, 0);
 
     if (frame_buffer == 0)
     {
@@ -55,9 +55,9 @@ int close_framebuffer()
         return -1;
     }
 
-    munmap(frame_buffer, 640 * 480 * 4);
+    sys_munmap(frame_buffer, 640 * 480 * 4);
 
-    close(FRAME_BUFFER_FD);
+    sys_close(FRAME_BUFFER_FD);
 
     FRAME_BUFFER_FD = -1;
     frame_buffer = 0;
@@ -123,7 +123,7 @@ int flush_framebuffer()
         return -1;
     }
 
-    ioctl(FRAME_BUFFER_FD, FB_FLUSH, 0);
+    sys_ioctl(FRAME_BUFFER_FD, FB_FLUSH, 0);
 
     return 0;
 }
@@ -150,5 +150,5 @@ void graphics_perror()
     assert(LIBGRAPHICS_ERROR);
 
     eprintf("LibGraphics Error: `%s`\n", graphics_strerror(LIBGRAPHICS_ERROR));
-    exit(-1);
+    sys_exit(-1);
 }
