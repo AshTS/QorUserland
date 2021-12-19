@@ -28,6 +28,10 @@ void start_shell()
 }
 int main(int argc, char** argv)
 {
+    const char* envp[1];
+
+    envp[0] = 0;
+
     int fd = open("/dev/tty0", O_RDONLY);
     dup2(fd, 0);
     fd = open("/dev/tty0", O_RDONLY);
@@ -35,5 +39,11 @@ int main(int argc, char** argv)
     fd = open("/dev/tty0", O_RDONLY);
     dup2(fd, 2);
 
-    start_shell();
+    /*
+    if (argc < 2)
+    {
+        start_shell();
+    }
+*/
+    execve(argv[1], argv + 1, envp);
 }

@@ -57,6 +57,12 @@
         "output-path": "/bin/ex-sort"
     },
     {
+        "name": "Graphics Test",
+        "make-path": "qor-userland/Examples/graphics-test",
+        "bin-path": "qor-userland/Examples/graphics-test/bin/graphics-test",
+        "output-path": "/bin/graphics-test"
+    },
+    {
         "name": "ls",
         "make-path": "qor-userland/Utils/ls",
         "bin-path": "qor-userland/Utils/ls/bin/ls",

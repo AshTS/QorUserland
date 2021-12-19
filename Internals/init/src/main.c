@@ -1,6 +1,8 @@
 #include <libc/sys/syscalls.h>
 #include <libc/dirent.h>
 #include <libc/stdio.h>
+#include <libc/string.h>
+#include <libc/stdlib.h>
 
 #define INIT_DIRECTORY "/etc/startup.d"
 #define KERNEL_LOG(...) { int lfd = open("/var/syslog", O_APPEND); raw_fprintf(lfd, __VA_ARGS__); close(lfd); }
@@ -18,6 +20,11 @@ void setup_stdio()
 
 int execute_process(char** argc, char** envp);
 
+int compare_strings(const void* a, const void* b)
+{
+    return strcmp(*(const char**)a, *(const char**)b);
+}
+
 int main()
 {
     char* envp[1];
@@ -34,6 +41,9 @@ int main()
     }
     else
     {
+        size_t count = 0;
+        size_t length = 4;
+        char** buffer = malloc(length * sizeof(char*));
         struct dirent* entry;
         while ((entry = readdir(directory)))
         {
@@ -42,14 +52,39 @@ int main()
                 continue;
             }
 
-            KERNEL_LOG("Executing %s\n", entry->d_name);
+            count++;
+
+            if (count >= length)
+            {
+                char** new_buf = malloc(2 * length * sizeof(char*));
+
+                memcpy(new_buf, buffer, length * sizeof(char*));
+
+                free(buffer);
+                buffer = new_buf;
+
+                length *= 2;
+            }
+
+            buffer[count - 1] = entry->d_name;
+        }
+
+        KERNEL_LOG("Found %i Files\n", count);
+
+        qsort(buffer, count, sizeof(char*), compare_strings);
+
+        for (int i = 0; i < count; i++)
+        {
+            KERNEL_LOG("Executing %s\n", buffer[i]);
             char path[256];
-			sprintf(path, INIT_DIRECTORY "/%s", entry->d_name);
+            sprintf(path, INIT_DIRECTORY "/%s", buffer[i]);
             char* argv[2];
             argv[0] = path;
             argv[1] = 0;
             execute_process(argv, envp);
         }
+
+        free(buffer);
     }
 
     KERNEL_LOG("Shutting Down\n");
