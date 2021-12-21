@@ -54,8 +54,6 @@ int main(int argc, char** argv)
 {
     tcgetattr(STDIN_FILENO, &terminal_settings);
 
-    printf("Settings: %x\n", terminal_settings.c_lflag);
-
     // Setup the handler for SIGINT
     struct sigaction new;
     struct sigaction old;
@@ -167,7 +165,6 @@ int main(int argc, char** argv)
         }
         else if (strcmp("reset", buffer) == 0)
         {
-            printf("Resetting Terminal\n");
             tcsetattr(STDIN_FILENO, TCSAFLUSH, &terminal_settings);
             continue;
         }
