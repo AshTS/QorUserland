@@ -3,8 +3,10 @@
 #include <libc/errno.h>
 #include "libc/stdio.h"
 #include "libc/sys/syscalls.h"
+#include <libc/termios.h>
 #include "libc/string.h"
 #include "signals.h"
+#include <libc/unistd.h>
 
 
 char* PATH = "/bin/";
@@ -16,6 +18,8 @@ static bool IS_TIMING = false;
 static bool SHOW_TAG = true;
 
 static int RETURN_CODE = 0;
+
+static struct termios terminal_settings;
 
 void display_tag();
 
@@ -48,6 +52,10 @@ bool read_line_from(int fd, char** line);
 
 int main(int argc, char** argv)
 {
+    tcgetattr(STDIN_FILENO, &terminal_settings);
+
+    printf("Settings: %x\n", terminal_settings.c_lflag);
+
     // Setup the handler for SIGINT
     struct sigaction new;
     struct sigaction old;
@@ -155,6 +163,12 @@ int main(int argc, char** argv)
                 eprintf("Unable to switch to `%s`\n", path_buffer);
             }
 
+            continue;
+        }
+        else if (strcmp("reset", buffer) == 0)
+        {
+            printf("Resetting Terminal\n");
+            tcsetattr(STDIN_FILENO, TCSAFLUSH, &terminal_settings);
             continue;
         }
 
