@@ -30,11 +30,11 @@ int run_exec_time(char* exec, char** argv, char** envp);
 
 void handler(int sig, struct siginfo_t *info, void *ucontext)
 {
-    // printf("Got SIGINT\n");
+    printf("Got SIGINT\n");
 
     if (RUNNING_PID > 0)
     {
-        sys_kill(RUNNING_PID, SIGINT);
+        // sys_kill(RUNNING_PID, SIGINT);
         printf("\n");
     }
     else
@@ -301,6 +301,11 @@ int run_exec(char* exec, char** argv, char** envp)
 
     if (pid == 0)
     {
+        pid_t pid = sys_getpid();
+        sys_setpgid(pid, pid);
+
+        tcsetpgrp(STDIN_FILENO, pid);
+
         // handle_redirect(argv);
         sys_execve(argv[0], (const char**)argv, (const char**)envp);
 
@@ -335,7 +340,7 @@ int run_exec(char* exec, char** argv, char** envp)
         sys_exit(-1);
     }
     else
-    {
+    {   
         RUNNING_PID = pid;
         sys_wait(&RETURN_CODE);
         RUNNING_PID = 0;
