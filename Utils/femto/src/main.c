@@ -18,6 +18,7 @@ void enableRawMode()
 
     struct termios raw = orig_termios;
     raw.c_iflag &= ~(ICRNL | IXON);
+    raw.c_oflag &= ~(OPOST);
     raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
 
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
@@ -32,11 +33,11 @@ int main()
     {
         if (iscntrl(c))
         {
-            printf("%i\n", c);
+            printf("%d\n", c);
         }
         else
         {
-            printf("%i ('%c')\n", c, c);
+            printf("%d ('%c')\n", c, c);
         }
     }
     return 0;
