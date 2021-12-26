@@ -1,4 +1,4 @@
 #!/bin/shell
 
 term /bin/echo Displaying Splashscreen
-bmp /usr/share/logo.bmp
+term /bin/bmp /usr/share/logo.bmp
