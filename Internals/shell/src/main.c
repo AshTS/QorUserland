@@ -3,8 +3,10 @@
 #include <libc/errno.h>
 #include "libc/stdio.h"
 #include "libc/sys/syscalls.h"
+#include <libc/termios.h>
 #include "libc/string.h"
 #include "signals.h"
+#include <libc/unistd.h>
 
 
 char* PATH = "/bin/";
@@ -17,6 +19,8 @@ static bool SHOW_TAG = true;
 
 static int RETURN_CODE = 0;
 
+static struct termios terminal_settings;
+
 void display_tag();
 
 int handle_redirect(char** argv);
@@ -26,11 +30,11 @@ int run_exec_time(char* exec, char** argv, char** envp);
 
 void handler(int sig, struct siginfo_t *info, void *ucontext)
 {
-    // printf("Got SIGINT\n");
+    printf("Got SIGINT\n");
 
     if (RUNNING_PID > 0)
     {
-        sys_kill(RUNNING_PID, SIGINT);
+        // sys_kill(RUNNING_PID, SIGINT);
         printf("\n");
     }
     else
@@ -48,6 +52,8 @@ bool read_line_from(int fd, char** line);
 
 int main(int argc, char** argv)
 {
+    tcgetattr(STDIN_FILENO, &terminal_settings);
+
     // Setup the handler for SIGINT
     struct sigaction new;
     struct sigaction old;
@@ -155,6 +161,11 @@ int main(int argc, char** argv)
                 eprintf("Unable to switch to `%s`\n", path_buffer);
             }
 
+            continue;
+        }
+        else if (strcmp("reset", buffer) == 0)
+        {
+            tcsetattr(STDIN_FILENO, TCSAFLUSH, &terminal_settings);
             continue;
         }
 
@@ -290,6 +301,11 @@ int run_exec(char* exec, char** argv, char** envp)
 
     if (pid == 0)
     {
+        pid_t pid = sys_getpid();
+        sys_setpgid(pid, pid);
+
+        tcsetpgrp(STDIN_FILENO, pid);
+
         // handle_redirect(argv);
         sys_execve(argv[0], (const char**)argv, (const char**)envp);
 
@@ -324,7 +340,7 @@ int run_exec(char* exec, char** argv, char** envp)
         sys_exit(-1);
     }
     else
-    {
+    {   
         RUNNING_PID = pid;
         sys_wait(&RETURN_CODE);
         RUNNING_PID = 0;
