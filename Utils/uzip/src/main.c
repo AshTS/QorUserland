@@ -1,116 +1,173 @@
-#include <libc/assert.h>
 #include <libc/errno.h>
-#include <libc/stdbool.h>
 #include <libc/stdio.h>
-#include <libc/string.h>
 #include <libc/stdlib.h>
+#include <libc/string.h>
 
-#include "argparse.h"
+#include "libzip.h"
 
-void show_usage(char*);
-
-void print_file(char* name);
-
-bool show_lines = false;
-
+// Main Entry Point
 int main(int argc, char** argv)
 {
-    // Parse command line arguments
-    struct Arguments args;
-    int arg_parse_result = arg_parse(&args, argc, argv);
-    assert(!arg_parse_result);
+    // Output file name
+    const char* output_filename = "out";
 
-    show_lines = arg_check_short(&args, 'n') || arg_check_long(&args, "number");
-
-    if (arg_check_short(&args, 'h') || arg_check_long(&args, "help"))
+    // Check to see if we are given the filename to read in
+    if (argc < 2)
     {
-        show_usage(argv[0]);
-        return 0;
+        printf("Please provide a file to decompress.\n");
+        return 1;
     }
 
-    char** to_print = arg_get_free(&args);
+    // Get the filename as its own variable
+    const char* filename = argv[1];
 
-    if (*to_print == 0)
-    {
-        print_file("-");
-    }
-    else
-    {
-        while (to_print && *to_print)
-        {
-            print_file(*to_print++);
-        }
-    }
-}
-
-void print_line_number(size_t line)
-{
-    printf("%4ld ", line);
-}
-
-void print_file(char* name)
-{
-    if (strcmp(name, "-") == 0)
-    {
-        assert(0 && "Not yet Implemented: cat does not yet implement the ability to print from stdin");
-    }
-
+    // Before doing any reading from files, make sure errno is in a known state
     errno = 0;
 
-    FILE* file = fopen(name, "r");
-
-    if (file == 0 || errno != 0)
+    // Attempt to open the file
+    FILE* file = fopen(filename, "rb");
+    
+    // Print out an error message if an error occurs
+    if (file == NULL || errno != 0)
     {
-        fprintf(stderr, "Unable to open file `%s`: %s\n", name, strerror(errno));
-        exit(1);
+        printf("Unable to open `%s`: %s\n", filename, strerror(errno));
+        return 2;
     }
 
-    char buffer[1024];
-    size_t count;
+    // Read the first 4KiB of the file into memory, this will hopefully be enough for now
+    // TODO: Change this to dynamically allocate the size of the file
+    uint8_t buffer[4096];
+    fread(buffer, 1, 4096, file);
 
-    size_t line = 1;
-
-    if (show_lines) { print_line_number(line); }
-
-    while ((count = fread(buffer, 1, 1023, file)))
+    // Print out an error message if the read failed
+    if (errno != 0)
     {
-        if (errno != 0)
-        {
-            fprintf(stderr, "Unable to read file `%s`: %s\n", name, strerror(errno));
-            exit(1);
-        }
-
-        buffer[count] = 0;
-
-        if (!show_lines)
-        {
-            printf("%s", buffer);
-        }
-        else
-        {
-            char* walk = buffer;
-            char* ptr;
-
-            while ((ptr = strchr(walk, '\n')))
-            {
-                *ptr = '\0';
-
-                printf("%s\n", walk);
-                walk = ptr + 1;
-                print_line_number(++line);
-            }
-
-            printf("%s", walk);
-        }
+        printf("Unable to read from file: %s\n", strerror(errno));
+        return 3;
     }
 
-    printf("\n");
-}
+    // Close the file handle we were given
+    fclose(file);
 
-void show_usage(char* prog_name)
-{
-    printf("Usage: %s [OPTIONS] ... [FILE] ...\n", prog_name);
-    printf(" Output the contents of FILE to stdout\n\n");
-    printf("       -h --help          Show the usage\n");
-    printf("       -n --number        Give line numbers\n");
+    // Print out an error message if we were unable to close the file
+    if (errno != 0)
+    {
+        printf("Unable to close file: %s\n", strerror(errno));
+        return 4;
+    }
+
+    // Check to see if the file is a gzip archive by checking the magic number
+    if (buffer[0] != GZIP_MAGIC0 || buffer[1] != GZIP_MAGIC1)
+    {
+        printf("File is not a gzip archive\n");
+        return 5;
+    }
+
+    // Make sure the archive was compressed using DEFLATE
+    if (buffer[2] != CM_DEFLATE)
+    {
+        printf("File was not compressed using deflate\n");
+        return 6;
+    }
+
+    // Store the compression flags
+    uint8_t flags = buffer[3];
+
+    // Offset into the buffer from the file
+    size_t offset = 4;
+
+    // Skip past the modified time, xfl, and os fields
+    offset += 4 + 1 + 1;
+
+    // Skip past any extra data stored within the header
+    if (flags & FEXTRA)
+    {
+        // Extract the length of the extra data
+        uint16_t length = *(uint16_t*)(buffer + offset);
+
+        // Skip past the length parameter and the extra data
+        offset += 2 + length;
+    }
+
+    // Skip past the original filename
+    if (flags & FNAME)
+    {
+        // Extract the name
+        const char* name = (const char*)buffer + offset;
+
+        output_filename = name;
+
+        // Print the name
+        // printf("Original Name: `%s`\n", name);
+
+        // Move past the name
+        offset += strlen(name) + 1;
+    }
+    
+    // Skip past any comments stored in the header
+    if (flags & FCOMMENT)
+    {
+        // Extract the comment
+        const char* comment = (const char*)buffer + offset;
+
+        // Print the comment
+        // printf("Comment: `%s`\n", comment);
+
+        // Move past the comment
+        offset += strlen(comment) + 1;
+    }
+
+    // Skip past the crc data if present
+    if (flags & FHCRC)
+    {
+        // Skip the 16 bits
+        offset += 2;
+    }
+
+    // Now, finally we are at the compressed data
+    size_t length;
+    uint8_t* data = deflate_decompress(buffer + offset, &length);
+
+    // Check if the decompressed data is NULL, and display an error message if so
+    if (data == NULL)
+    {
+        printf("Unable to decompress data.\n");
+        return 7;
+    }
+
+    printf("%s\n", data);
+
+    // Open the output file
+    FILE* outf = fopen(output_filename, "wb");
+
+    // Print out an error message if an error occurs
+    if (outf == NULL || errno != 0)
+    {
+        printf("Unable to open `%s`: %s\n", output_filename, strerror(errno));
+        return 8;
+    }
+
+    fwrite(data, 1, length, outf);
+
+    // Print out an error message if the write failed
+    if (errno != 0)
+    {
+        printf("Unable to write to file: %s\n", strerror(errno));
+        return 9;
+    }
+
+    // Close the file handle we were given
+    fclose(outf);
+
+    // Print out an error message if we were unable to close the file
+    if (errno != 0)
+    {
+        printf("Unable to close file: %s\n", strerror(errno));
+        return 10;
+    }
+
+    // Free the buffer with the decompressed data
+    free(data);
+
+    return 0;
 }

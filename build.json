@@ -128,5 +128,11 @@
         "make-path": "qor-userland/Utils/bmp",
         "bin-path": "qor-userland/Utils/bmp/bin/bmp",
         "output-path": "/bin/bmp"
+    },
+    {
+        "name": "uzip",
+        "make-path": "qor-userland/Utils/uzip",
+        "bin-path": "qor-userland/Utils/uzip/bin/uzip",
+        "output-path": "/bin/uzip"
     }
 ]
