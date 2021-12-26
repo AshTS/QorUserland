@@ -14,7 +14,7 @@ SRC_DIR = src
 _LIBS = 
 LIBS = $(patsubst %,$(LIB_DIR)/%,$(_LIBS))
 
-_OBJ = generic.o bmp.o
+_OBJ = generic.o bmp.o png.o
 OBJ = $(patsubst %,$(BUILD_DIR)/%,$(_OBJ))
 
 $(OUTPUT_DIR)/libimg.a : $(OUTPUT_DIR) $(BUILD_DIR) $(OBJ) $(LIBS)

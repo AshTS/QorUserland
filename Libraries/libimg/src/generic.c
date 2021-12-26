@@ -6,6 +6,7 @@
 #include <libc/string.h>
 
 #include "bmp.h"
+#include "png.h"
 
 // Load an image with a generic backend
 int load_image_from_backend(int (*backend)(void*, struct image_data*), void* buffer, struct image_data* data)
@@ -31,6 +32,10 @@ int load_image(const char* filename, struct image_data* image_data_ptr)
     if (strcmp(walk, "bmp") == 0)
     {
         backend = image_backend_bmp;
+    }
+    else if (strcmp(walk, "png") == 0)
+    {
+        backend = image_backend_png;
     }
     else
     {

@@ -13,7 +13,10 @@ int main(int argc, char** argv)
     
     struct image_data data;
 
-    load_image(argv[1], &data);
+    if (load_image(argv[1], &data))
+    {
+        printf("Image load failed!\n");
+    }
 
     blit(&data, 320 - data.width / 2, 240 - data.height / 2);
 
