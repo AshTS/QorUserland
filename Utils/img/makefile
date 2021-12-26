@@ -21,7 +21,7 @@ OBJ = $(patsubst %,$(BUILD_DIR)/%,$(_OBJ))
 
 RAW_INCLUDES = $(patsubst %, $(INCLUDE_DIR)/%, $(INCLUDES))
 
-$(OUTPUT_DIR)/bmp : $(BUILD_DIR) $(OBJ) $(LIBS)
+$(OUTPUT_DIR)/img : $(BUILD_DIR) $(OBJ) $(LIBS)
 	$(LINK) $(LINKFLAGS) $(OBJ) $(LIBS) -o $@
 
 $(BUILD_DIR)/%.o : $(SRC_DIR)/%.c $(RAW_INCLUDES)

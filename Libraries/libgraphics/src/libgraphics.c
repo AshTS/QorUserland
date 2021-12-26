@@ -2,8 +2,11 @@
 
 #include <libc/assert.h>
 #include <libc/stdio.h>
+#include <libc/string.h>
 #include <libc/sys/syscalls.h>
 #include <libc/sys/types.h>
+
+#include "libimg.h"
 
 static int FRAME_BUFFER_FD = -1;
 static struct Pixel* frame_buffer = 0;
@@ -151,4 +154,21 @@ void graphics_perror()
 
     eprintf("LibGraphics Error: `%s`\n", graphics_strerror(LIBGRAPHICS_ERROR));
     sys_exit(-1);
+}
+
+void blit(struct image_data* data, size_t x, size_t y)
+{
+    init_framebuffer();
+
+    struct Pixel* fb = get_framebuffer();
+
+    size_t row_length = sizeof(struct Pixel) * data->width;
+
+    for (size_t i = 0; i < data->height; i++)
+    {
+        memcpy(&fb[compute_location(x, y + i)], data->buffer + row_length * i, row_length);
+    }
+
+    flush_framebuffer();
+    close_framebuffer();
 }

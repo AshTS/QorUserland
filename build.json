@@ -131,10 +131,10 @@
         "output-path": "/bin/femto"
     },
     {
-        "name": "bmp",
-        "make-path": "qor-userland/Utils/bmp",
-        "bin-path": "qor-userland/Utils/bmp/bin/bmp",
-        "output-path": "/bin/bmp"
+        "name": "img",
+        "make-path": "qor-userland/Utils/img",
+        "bin-path": "qor-userland/Utils/img/bin/img",
+        "output-path": "/bin/img"
     },
     {
         "name": "uzip",

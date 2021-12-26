@@ -22,6 +22,9 @@
 #define COLOR_LIGHT_YELLOW (struct Pixel){.r=255, .g=255, .b=128, .a=255}
 #define COLOR_LIGHT_CYAN (struct Pixel){.r=128, .g=255, .b=255, .a=255}
 
+#include <libc/stdlib.h>
+#include <libc/stddef.h>
+#include "libimg.h"
 
 extern int LIBGRAPHICS_ERROR;
 
@@ -46,5 +49,7 @@ int flush_framebuffer();
 
 char* graphics_strerror(int error);
 void graphics_perror();
+
+void blit(struct image_data* data, size_t x, size_t y);
 
 #endif // _LIBGRAPHICS_H
