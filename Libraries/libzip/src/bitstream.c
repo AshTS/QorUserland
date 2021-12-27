@@ -36,7 +36,7 @@ uint8_t read_bits(struct bitstream* s, size_t count)
 // Read multiple bits from the bitstream, placing the most recent read into the most significant bit (maximum of 16 bits can be read with this function)
 uint16_t read_bits16(struct bitstream* s, size_t count)
 {
-    assert(count <= 8);
+    assert(count <= 16);
 
     uint16_t result = 0;
 

@@ -11,14 +11,14 @@ OUTPUT_DIR = bin
 BUILD_DIR = build
 SRC_DIR = src
 
-_LIBS = 
+_LIBS = libzip.a
 LIBS = $(patsubst %,$(LIB_DIR)/%,$(_LIBS))
 
 _OBJ = generic.o bmp.o png.o
 OBJ = $(patsubst %,$(BUILD_DIR)/%,$(_OBJ))
 
 $(OUTPUT_DIR)/libimg.a : $(OUTPUT_DIR) $(BUILD_DIR) $(OBJ) $(LIBS)
-	$(LINK) $(LINKFLAGS) $@ $(OBJ) $(LIBS)
+	$(LINK) $(LINKFLAGS) $@ $(OBJ)
 
 $(BUILD_DIR)/%.o : $(SRC_DIR)/%.c $(INCLUDES)
 	$(CC) $(CFLAGS) -isystem $(INCLUDE) -c $< -o $@

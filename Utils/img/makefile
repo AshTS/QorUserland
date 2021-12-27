@@ -13,7 +13,7 @@ OUTPUT_DIR = bin
 BUILD_DIR = bin
 SRC_DIR = src
 
-_LIBS = libc.a libgraphics.a libimg.a
+_LIBS = libc.a libgraphics.a libimg.a libzip.a
 LIBS = $(patsubst %,$(LIB_DIR)/%,$(_LIBS))
 
 _OBJ = main.o
