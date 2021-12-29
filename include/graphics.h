@@ -50,6 +50,6 @@ int flush_framebuffer();
 char* graphics_strerror(int error);
 void graphics_perror();
 
-void blit(struct image_data* data, size_t x, size_t y);
+int blit(struct image_data* data, size_t x, size_t y);
 
 #endif // _LIBGRAPHICS_H

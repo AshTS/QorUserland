@@ -156,9 +156,12 @@ void graphics_perror()
     sys_exit(-1);
 }
 
-void blit(struct image_data* data, size_t x, size_t y)
+int blit(struct image_data* data, size_t x, size_t y)
 {
-    init_framebuffer();
+    int result;
+    result = init_framebuffer();
+    if (result)
+        return result;
 
     struct Pixel* fb = get_framebuffer();
 
@@ -169,6 +172,11 @@ void blit(struct image_data* data, size_t x, size_t y)
         memcpy(&fb[compute_location(x, y + i)], data->buffer + row_length * i, row_length);
     }
 
-    flush_framebuffer();
-    close_framebuffer();
+    result = flush_framebuffer();
+    if (result)
+        return result;
+
+    result = close_framebuffer();
+    if (result)
+        return result;
 }
