@@ -36,7 +36,7 @@ struct png_24bpp
 };
 
 // Process an individual png chunk
-int handle_png_chunk(void** buffer, struct image_data* data, void** compressed_buffer, size_t* compressed_buffer_size);
+int handle_png_chunk(void** buffer, struct pixel_buffer* data, void** compressed_buffer, size_t* compressed_buffer_size);
 
 uint8_t paeth_byte(uint8_t a, uint8_t b, uint8_t c)
 {
@@ -77,7 +77,7 @@ struct Pixel paeth(struct Pixel a, struct Pixel b, struct Pixel c)
 }
 
 // Load a portable network graphic image from a buffer into an image data buffer
-int image_backend_png(void* buffer, struct image_data* data)
+int image_backend_png(void* buffer, struct pixel_buffer* data)
 {
     // Verify the buffer is a png file
     if (memcmp(buffer, "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a", 8) != 0)
@@ -129,10 +129,10 @@ int image_backend_png(void* buffer, struct image_data* data)
 
                     if (x > 0)
                     {
-                        last = ((struct Pixel*)data->buffer)[y * data->width + x - 1];
+                        last = ((struct Pixel*)data->raw_buffer)[y * data->width + x - 1];
                     }
 
-                    ((struct Pixel*)data->buffer)[y * data->width + x] = (struct Pixel){.r = last.r + color.r, .g = last.g + color.g, .b = last.b + color.b, .a = 255};
+                    ((struct Pixel*)data->raw_buffer)[y * data->width + x] = (struct Pixel){.r = last.r + color.r, .g = last.g + color.g, .b = last.b + color.b, .a = 255};
                 }
                 else if (filter_type == 2)
                 {
@@ -140,10 +140,10 @@ int image_backend_png(void* buffer, struct image_data* data)
 
                     if (y > 0)
                     {
-                        last = ((struct Pixel*)data->buffer)[(y - 1) * data->width + x];
+                        last = ((struct Pixel*)data->raw_buffer)[(y - 1) * data->width + x];
                     }
 
-                    ((struct Pixel*)data->buffer)[y * data->width + x] = (struct Pixel){.r = last.r + color.r, .g = last.g + color.g, .b = last.b + color.b, .a = 255};
+                    ((struct Pixel*)data->raw_buffer)[y * data->width + x] = (struct Pixel){.r = last.r + color.r, .g = last.g + color.g, .b = last.b + color.b, .a = 255};
                 }
                 else if (filter_type == 3)
                 {
@@ -152,16 +152,16 @@ int image_backend_png(void* buffer, struct image_data* data)
 
                     if (x > 0)
                     {
-                        left = ((struct Pixel*)data->buffer)[y * data->width + x - 1];
+                        left = ((struct Pixel*)data->raw_buffer)[y * data->width + x - 1];
                     }
                     if (y > 0)
                     {
-                        up = ((struct Pixel*)data->buffer)[(y - 1) * data->width + x];
+                        up = ((struct Pixel*)data->raw_buffer)[(y - 1) * data->width + x];
                     }
 
                     struct Pixel last = (struct Pixel){.r = ((size_t)left.r + (size_t)up.r) / 2, .g = ((size_t)left.g + (size_t)up.g) / 2, .b = ((size_t)left.b + (size_t)up.b) / 2};
 
-                    ((struct Pixel*)data->buffer)[y * data->width + x] = (struct Pixel){.r = last.r + color.r, .g = last.g + color.g, .b = last.b + color.b, .a = 255};
+                    ((struct Pixel*)data->raw_buffer)[y * data->width + x] = (struct Pixel){.r = last.r + color.r, .g = last.g + color.g, .b = last.b + color.b, .a = 255};
                 }
                 else if (filter_type == 4)
                 {
@@ -171,24 +171,24 @@ int image_backend_png(void* buffer, struct image_data* data)
 
                     if (x > 0)
                     {
-                        left = ((struct Pixel*)data->buffer)[y * data->width + x - 1];
+                        left = ((struct Pixel*)data->raw_buffer)[y * data->width + x - 1];
                     }
                     if (y > 0)
                     {
-                        up = ((struct Pixel*)data->buffer)[(y - 1) * data->width + x];
+                        up = ((struct Pixel*)data->raw_buffer)[(y - 1) * data->width + x];
                     }
                     if (x > 0 && y > 0)
                     {
-                        ul = ((struct Pixel*)data->buffer)[(y - 1) * data->width + x - 1];
+                        ul = ((struct Pixel*)data->raw_buffer)[(y - 1) * data->width + x - 1];
                     }
 
                     struct Pixel last = paeth(left, up, ul);
 
-                    ((struct Pixel*)data->buffer)[y * data->width + x] = (struct Pixel){.r = last.r + color.r, .g = last.g + color.g, .b = last.b + color.b, .a = 255};
+                    ((struct Pixel*)data->raw_buffer)[y * data->width + x] = (struct Pixel){.r = last.r + color.r, .g = last.g + color.g, .b = last.b + color.b, .a = 255};
                 }
                 else
                 {
-                    ((struct Pixel*)data->buffer)[y * data->width + x] = (struct Pixel){.r = color.r, .g = color.g, .b = color.b, .a = 255};
+                    ((struct Pixel*)data->raw_buffer)[y * data->width + x] = (struct Pixel){.r = color.r, .g = color.g, .b = color.b, .a = 255};
                 }
             }
         }
@@ -198,13 +198,9 @@ int image_backend_png(void* buffer, struct image_data* data)
 }
 
 // Handle a metadata chunk
-int handle_metadata_chunk(void* buffer, struct image_data* data)
+int handle_metadata_chunk(void* buffer, struct pixel_buffer* data)
 {
     struct png_metadata_chunk* chunk_data = buffer;
-
-    // Copy the width and height
-    data->width = (size_t)BIG_ENDIAN32(chunk_data->width);
-    data->height = (size_t)BIG_ENDIAN32(chunk_data->height);
 
     // Make sure we are in a supported format, for right now just a bitDepth of 8, true color, filter set 0, and no interlacing
     if (chunk_data->bit_depth != 8)
@@ -231,20 +227,13 @@ int handle_metadata_chunk(void* buffer, struct image_data* data)
         assert(0);
     }
 
-    struct Pixel* pixels = malloc(4 * data->width * data->height);
-
-    data->buffer = pixels;
-
-    for (size_t i = 0; i < data->width * data->height; i++)
-    {
-        pixels[i] = (struct Pixel){.r = 128, .g = 128, .b = 128, .a = 255};
-    }
+    *data = alloc_pixel_buffer(RGBA32, (size_t)BIG_ENDIAN32(chunk_data->width), (size_t)BIG_ENDIAN32(chunk_data->height));
 
     return 0;
 }
 
 // Handle a data chunk
-int handle_data_chunk(void* buffer, struct image_data* data, size_t length, void** compressed_buffer, size_t* compressed_buffer_size)
+int handle_data_chunk(void* buffer, struct pixel_buffer* data, size_t length, void** compressed_buffer, size_t* compressed_buffer_size)
 {
     void* new_buffer = malloc(*compressed_buffer_size + length);
     if (*compressed_buffer_size != 0)
@@ -266,7 +255,7 @@ int handle_data_chunk(void* buffer, struct image_data* data, size_t length, void
 }
 
 // Process an individual png chunk
-int handle_png_chunk(void** buffer, struct image_data* data, void** compressed_buffer, size_t* compressed_buffer_size)
+int handle_png_chunk(void** buffer, struct pixel_buffer* data, void** compressed_buffer, size_t* compressed_buffer_size)
 {
     // Extract the header and data
     png_chunk_header* header = *buffer;

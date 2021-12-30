@@ -11,7 +11,7 @@ int main(int argc, char** argv)
         return 1;
     }
     
-    struct image_data data;
+    struct pixel_buffer data;
 
     if (load_image(argv[1], &data))
     {

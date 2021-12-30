@@ -14,7 +14,7 @@ struct bmp_pixel
 };
 
 // Load a bitmap image from a buffer into an image data buffer
-int image_backend_bmp(void* buffer, struct image_data* data)
+int image_backend_bmp(void* buffer, struct pixel_buffer* data)
 {
     // First load the buffer as a bitmap header
     BitmapHeader* header = (BitmapHeader*)buffer;
@@ -25,12 +25,8 @@ int image_backend_bmp(void* buffer, struct image_data* data)
         return -1;
     }
 
-    // Get the width and height of the image and load them into the data structure
-    data->width = (size_t)header->width;
-    data->height = (size_t)header->height;
-
-    // Allocate the space for the image buffer
-    data->buffer = malloc(4 * data->width * data->height);
+    // Allocate the pixel buffer
+    *data = alloc_pixel_buffer(RGBA32, (size_t)header->width, (size_t)header->height);
 
     // Get a pointer into the bitmap file at the beginning of the pixel data
     uint8_t* pixel_data = (size_t)buffer + (size_t)header->pixel_data_offset;
@@ -40,7 +36,7 @@ int image_backend_bmp(void* buffer, struct image_data* data)
     line_length += (4 - (line_length % 4)) % 4;
 
     // Iterate over every line, copying the data into the buffer
-    struct Pixel* output_buffer = data->buffer;
+    struct Pixel* output_buffer = data->raw_buffer;
     for (size_t y = 0; y < data->height; y++)
     {
         size_t true_y = data->height - 1 - y;

@@ -78,6 +78,12 @@ struct Pixel* get_framebuffer()
     return frame_buffer;
 }
 
+struct pixel_buffer get_pixel_framebuffer()
+{
+    struct pixel_buffer buf = (struct pixel_buffer){.raw_buffer = get_framebuffer(), .width = 640, .height = 480, .line_length = 4 * 640 * 8, .fmt = RGBA32};
+    return buf;
+}
+
 int compute_location(int x, int y)
 {
     return 640 * y + x;
@@ -156,7 +162,7 @@ void graphics_perror()
     sys_exit(-1);
 }
 
-int blit(struct image_data* data, size_t x, size_t y)
+int blit(struct pixel_buffer* data, size_t x, size_t y)
 {
     int result;
     result = init_framebuffer();
@@ -165,12 +171,14 @@ int blit(struct image_data* data, size_t x, size_t y)
 
     struct Pixel* fb = get_framebuffer();
 
-    size_t row_length = sizeof(struct Pixel) * data->width;
-
-    for (size_t i = 0; i < data->height; i++)
+    if (fb == 0)
     {
-        memcpy(&fb[compute_location(x, y + i)], data->buffer + row_length * i, row_length);
+        return 1;
     }
+
+    struct pixel_buffer dest = get_pixel_framebuffer();
+    
+    blit_buffer(&dest, data, x, y, 0, 0, data->width, data->height);
 
     result = flush_framebuffer();
     if (result)

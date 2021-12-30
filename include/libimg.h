@@ -3,15 +3,10 @@
 
 #include <libc/stddef.h>
 
-struct image_data
-{
-    size_t width;
-    size_t height;
-    void* buffer;
-};
+#include "pixelbuffer.h"
 
 // Load an image from file into a buffer which can later be free()ed. Returns
 // -1 on failure, and 0 on success.
-int load_image(const char* filename, struct image_data* data);
+int load_image(const char* filename, struct pixel_buffer* data);
 
 #endif // LIBIMG_H

@@ -14,7 +14,7 @@ SRC_DIR = src
 _LIBS = 
 LIBS = $(patsubst %,$(LIB_DIR)/%,$(_LIBS))
 
-_OBJ = libgraphics.o
+_OBJ = libgraphics.o pixel_buffer.o
 OBJ = $(patsubst %,$(BUILD_DIR)/%,$(_OBJ))
 
 $(OUTPUT_DIR)/libgraphics.a : $(OUTPUT_DIR) $(BUILD_DIR) $(OBJ) $(LIBS)

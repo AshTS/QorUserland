@@ -9,14 +9,14 @@
 #include "png.h"
 
 // Load an image with a generic backend
-int load_image_from_backend(int (*backend)(void*, struct image_data*), void* buffer, struct image_data* data)
+int load_image_from_backend(int (*backend)(void*, struct pixel_buffer*), void* buffer, struct pixel_buffer* data)
 {
     return backend(buffer, data);
 }
 
 // Load an image from file into a buffer which can later be free()ed. Returns
 // -1 on failure, and 0 on success.
-int load_image(const char* filename, struct image_data* image_data_ptr)
+int load_image(const char* filename, struct pixel_buffer* image_data_ptr)
 {
     const char* walk = filename;
     const char* suffix = strchr(walk, '.');
@@ -27,7 +27,7 @@ int load_image(const char* filename, struct image_data* image_data_ptr)
         suffix = strchr(walk, '.');
     }
 
-    int (*backend)(void*, struct image_data*);
+    int (*backend)(void*, struct pixel_buffer*);
 
     if (strcmp(walk, "bmp") == 0)
     {
