@@ -1,4 +1,4 @@
-CC = clang-11
+CC = clang
 CFLAGS = --target=riscv64 -march=rv64gc -mabi=lp64d -mno-relax -fPIC -fdata-sections -ffunction-sections
 INCLUDE = ${qorIncludePath}
 LINK = ar
