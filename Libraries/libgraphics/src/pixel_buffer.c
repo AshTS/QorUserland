@@ -80,8 +80,10 @@ int blit_buffer(struct pixel_buffer* dest, struct pixel_buffer* src, size_t dest
     }
 
     // Ensure the buffers are of the proper size to allow the blit to occur
-    // TODO
-    printf("TODO!\n");
+    if (dest_x + width > dest->width || dest_y + height > dest->height || src_x + width > src->width || src_y + height > src->height)
+    {
+        return 1;
+    }
 
     // Get the number of bits per pixel
     size_t bpp = GET_BITS_PER_PIXEL(dest->fmt);
