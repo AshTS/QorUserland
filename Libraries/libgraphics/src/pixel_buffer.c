@@ -3,6 +3,24 @@
 #include <libc/stdio.h>
 #include <libc/string.h>
 
+struct rgba32_pixel
+{
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+    uint8_t a;
+};
+
+struct bpp32
+{
+    uint8_t fields[4];
+};
+
+struct bpp24
+{
+    uint8_t fields[3];
+};
+
 static char* format_to_string(pixel_format fmt)
 {
     switch (fmt)
@@ -50,14 +68,62 @@ struct pixel_buffer alloc_pixel_buffer(pixel_format fmt, size_t width, size_t he
     return pixel_buf;
 }
 
+// Read a pixel in the given format into RGBA32
+struct rgba32_pixel convert_pixel(pixel_format src_format, void* ptr, uint8_t bit_offset)
+{
+    if (src_format == RGBA32)
+    {
+        return *(struct rgba32_pixel*)ptr;
+    }
+    else if (src_format == BGR24)
+    {
+        struct bpp24 raw = *(struct bpp24*)ptr;
+
+        return (struct rgba32_pixel){.r = raw.fields[2], .g = raw.fields[1], .b = raw.fields[0], .a=255};
+    }
+    else if (src_format == RGB24)
+    {
+        struct bpp24 raw = *(struct bpp24*)ptr;
+
+        return (struct rgba32_pixel){.r = raw.fields[0], .g = raw.fields[1], .b = raw.fields[2], .a=255};
+    }
+    else
+    {
+        printf("Unable to read pixel in format %s, not yet implemented.\n", format_to_string(src_format));
+        exit(1);
+    }
+}
+
 // Attempts to convert the format of the pixel_buffer. Note that this function allocates a new buffer, meaning the original buffer must be freed seperately.
 int convert_pixel_buffer(pixel_format dest_format, struct pixel_buffer* dest, struct pixel_buffer* src)
 {
     *dest = alloc_pixel_buffer(dest_format, src->width, src->height);
 
+    printf("Converting from %s to %s\n", format_to_string(src->fmt), format_to_string(dest->fmt));
+
     if (dest_format == src->fmt)
     {
         memcpy(dest->raw_buffer, src->raw_buffer, (GET_BITS_PER_PIXEL(dest_format) * src->width * src->height + 7) / 8);
+    }
+    else if (dest_format == RGBA32)
+    {
+        size_t bpp = GET_BITS_PER_PIXEL(src->fmt);
+        if (bpp % 8 != 0)
+        {
+            printf("Unable to convert from a format which is not byte aligned, not implemented.\n");
+            exit(1);
+        }
+
+        for (size_t y = 0; y < src->height; y++)
+        {
+            struct rgba32_pixel* dest_line = dest->raw_buffer + y * dest->line_length / 8;
+            void* src_line = src->raw_buffer + y * src->line_length / 8;
+
+            for (size_t x = 0; x < src->width; x++)
+            {
+                dest_line[x] = convert_pixel(src->fmt, src_line + x * bpp / 8, 0);
+            }
+        }
     }
     else
     {

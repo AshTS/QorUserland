@@ -2,6 +2,7 @@
 
 #include <libc/stdlib.h>
 #include <libc/stdio.h>
+#include <libc/string.h>
 #include <graphics.h>
 
 #include "bmp.h"
@@ -26,7 +27,7 @@ int image_backend_bmp(void* buffer, struct pixel_buffer* data)
     }
 
     // Allocate the pixel buffer
-    *data = alloc_pixel_buffer(RGBA32, (size_t)header->width, (size_t)header->height);
+    *data = alloc_pixel_buffer(BGR24, (size_t)header->width, (size_t)header->height);
 
     // Get a pointer into the bitmap file at the beginning of the pixel data
     uint8_t* pixel_data = (size_t)buffer + (size_t)header->pixel_data_offset;
@@ -36,17 +37,13 @@ int image_backend_bmp(void* buffer, struct pixel_buffer* data)
     line_length += (4 - (line_length % 4)) % 4;
 
     // Iterate over every line, copying the data into the buffer
-    struct Pixel* output_buffer = data->raw_buffer;
+    void* output_buffer = data->raw_buffer;
     for (size_t y = 0; y < data->height; y++)
     {
-        size_t true_y = data->height - 1 - y;
-        struct bmp_pixel* line = pixel_data + y * line_length;
+        memcpy(output_buffer, pixel_data + line_length * (data->height - 1 - y), line_length);
 
-        for (size_t x = 0; x < data->width; x++)
-        {
-            struct Pixel p = (struct Pixel){.r=line[x].r, .g=line[x].g, .b=line[x].b, .a=255};
-            output_buffer[true_y * data->width + x] = p;
-        }
+        // Step the output buffer forwards by the size of a line
+        output_buffer += data->line_length / 8;
     }
 
     return 0;

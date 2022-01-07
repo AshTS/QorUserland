@@ -28,21 +28,21 @@
 #define ORDER_RGB   0 << 7  // 0b0 << 7
 #define ORDER_BGR   1 << 7  // 0b1 << 7
 
-#define GRAY1       ORDER_RGB | CHNLS1 | BPP1
-#define GRAY4       ORDER_RGB | CHNLS1 | BPP4
-#define GRAY8       ORDER_RGB | CHNLS1 | BPP8
+#define GRAY1       (ORDER_RGB | CHNLS1 | BPP1)
+#define GRAY4       (ORDER_RGB | CHNLS1 | BPP4)
+#define GRAY8       (ORDER_RGB | CHNLS1 | BPP8)
 
-#define RGB12       ORDER_RGB | CHNLS3 | BPP12
-#define BGR12       ORDER_BGR | CHNLS3 | BPP12
+#define RGB12       (ORDER_RGB | CHNLS3 | BPP12)
+#define BGR12       (ORDER_BGR | CHNLS3 | BPP12)
 
-#define RGBA16      ORDER_RGB | CHNLS4 | BPP16
-#define BGRA16      ORDER_BGR | CHNLS4 | BPP16
+#define RGBA16      (ORDER_RGB | CHNLS4 | BPP16)
+#define BGRA16      (ORDER_BGR | CHNLS4 | BPP16)
 
-#define RGB24       ORDER_RGB | CHNLS3 | BPP24
-#define BGR24       ORDER_BGR | CHNLS3 | BPP24
+#define RGB24       (ORDER_RGB | CHNLS3 | BPP24)
+#define BGR24       (ORDER_BGR | CHNLS3 | BPP24)
 
-#define RGBA32      ORDER_RGB | CHNLS4 | BPP32
-#define BGRA32      ORDER_BGR | CHNLS4 | BPP32
+#define RGBA32      (ORDER_RGB | CHNLS4 | BPP32)
+#define BGRA32      (ORDER_BGR | CHNLS4 | BPP32)
 
 #define GET_BITS_PER_PIXEL(v) ((((v) & 0x1E) << 1) + ((v) & 1))
 #define GET_NUM_CHANNELS(v)   ((((v) & 0x20) >> 5) + 3*(((v) & 0x40) >> 6))
