@@ -99,8 +99,6 @@ int convert_pixel_buffer(pixel_format dest_format, struct pixel_buffer* dest, st
 {
     *dest = alloc_pixel_buffer(dest_format, src->width, src->height);
 
-    printf("Converting from %s to %s\n", format_to_string(src->fmt), format_to_string(dest->fmt));
-
     if (dest_format == src->fmt)
     {
         memcpy(dest->raw_buffer, src->raw_buffer, (GET_BITS_PER_PIXEL(dest_format) * src->width * src->height + 7) / 8);
