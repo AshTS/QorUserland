@@ -21,18 +21,18 @@
         "postbuild": ["cp qor-userland/Libraries/libgraphics/bin/libgraphics.a qor-userland/lib/libgraphics.a"]
     },
     {
-        "name": "LibImg",
-        "make-path": "qor-userland/Libraries/libimg",
-        "bin-path": "qor-userland/Libraries/libimg/bin/libimg.a",
-        "output-path": "/lib/libimg.a",
-        "postbuild": ["cp qor-userland/Libraries/libimg/bin/libimg.a qor-userland/lib/libimg.a"]
-    },
-    {
         "name": "LibZip",
         "make-path": "qor-userland/Libraries/libzip",
         "bin-path": "qor-userland/Libraries/libzip/bin/libzip.a",
         "output-path": "/lib/libzip.a",
         "postbuild": ["cp qor-userland/Libraries/libzip/bin/libzip.a qor-userland/lib/libzip.a"]
+    },
+    {
+        "name": "LibImg",
+        "make-path": "qor-userland/Libraries/libimg",
+        "bin-path": "qor-userland/Libraries/libimg/bin/libimg.a",
+        "output-path": "/lib/libimg.a",
+        "postbuild": ["cp qor-userland/Libraries/libimg/bin/libimg.a qor-userland/lib/libimg.a"]
     },
     {
         "name": "init",
