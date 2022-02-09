@@ -154,6 +154,8 @@ int blit_buffer(struct pixel_buffer* dest, struct pixel_buffer* src, size_t dest
     {
         printf("Cannot blit to buffer too small\n");
         exit(1);
+    }
+    
     // Get the number of bits per pixel
     size_t bpp = GET_BITS_PER_PIXEL(dest->fmt);
 
