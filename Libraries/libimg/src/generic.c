@@ -5,6 +5,8 @@
 #include <libc/stdlib.h>
 #include <libc/string.h>
 
+#include "graphics.h"
+
 #include "bmp.h"
 #include "png.h"
 
@@ -67,6 +69,32 @@ int load_image(const char* filename, struct pixel_buffer* image_data_ptr)
     }
 
     free(buffer);
+
+    return 0;
+}
+
+int load_image_format(const char* filename, struct pixel_buffer* data, pixel_format fmt)
+{
+    // First load the image in its native format
+    int result = load_image(filename, data);
+
+    if (result)
+        return result;
+
+    if (data->fmt == fmt)
+    {
+        return 0;
+    }
+
+    struct pixel_buffer temp;
+
+    result = convert_pixel_buffer(fmt, &temp, data);
+
+    if (result)
+        return -1;
+
+    free_pixel_buffer(*data);
+    *data = temp;
 
     return 0;
 }

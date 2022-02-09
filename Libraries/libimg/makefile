@@ -1,4 +1,4 @@
-CC = clang-11
+CC = clang
 CFLAGS = --target=riscv64 -march=rv64gc -mabi=lp64d -mno-relax -fPIC -fdata-sections -ffunction-sections
 INCLUDE = ${qorIncludePath}
 LINK = ar
@@ -11,7 +11,7 @@ OUTPUT_DIR = bin
 BUILD_DIR = build
 SRC_DIR = src
 
-_LIBS = libzip.a
+_LIBS = 
 LIBS = $(patsubst %,$(LIB_DIR)/%,$(_LIBS))
 
 _OBJ = generic.o bmp.o png.o

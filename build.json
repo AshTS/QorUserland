@@ -141,5 +141,11 @@
         "make-path": "qor-userland/Utils/uzip",
         "bin-path": "qor-userland/Utils/uzip/bin/uzip",
         "output-path": "/bin/uzip"
+    },
+    {
+        "name": "spin",
+        "make-path": "qor-userland/Games/spin",
+        "bin-path": "qor-userland/Games/spin/bin/spin",
+        "output-path": "/bin/spin"
     }
 ]

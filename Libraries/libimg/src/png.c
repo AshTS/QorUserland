@@ -71,9 +71,12 @@ uint8_t paeth_byte(uint8_t a, uint8_t b, uint8_t c)
    return c;
 }
 
-struct Pixel paeth(struct Pixel a, struct Pixel b, struct Pixel c)
+void paeth(uint8_t* dest, uint8_t* a, uint8_t* b, uint8_t* c, size_t bytes)
 {
-    return (struct Pixel){.r=paeth_byte(a.r, b.r, c.r), .g=paeth_byte(a.g, b.g, c.g), .b=paeth_byte(a.b, b.b, c.b), .a=255};
+    for (size_t i = 0; i < bytes; i++)
+    {
+        dest[i] = paeth_byte(a[i], b[i], c[i]);
+    }
 }
 
 // Load a portable network graphic image from a buffer into an image data buffer
@@ -112,9 +115,13 @@ int image_backend_png(void* buffer, struct pixel_buffer* data)
         void* decompressed = deflate_decompress(compressed_buffer + 2, &decompressed_size);
         free(compressed_buffer);
 
+        size_t number_bytes = GET_BITS_PER_PIXEL(data->fmt);
+
         for (size_t y = 0; y < data->height; y++)
         {
             uint8_t* line_pointer = decompressed + y * (1 + 3 * data->width);
+            struct png_24bpp* dest_line_pointer = data->raw_buffer + y * data->line_length / 8;
+            struct png_24bpp* dest_line_pointer_prev = (void*)dest_line_pointer - data->line_length / 8;
             uint8_t filter_type = *line_pointer;
             struct png_24bpp* pixels = (struct png_24bpp*)(line_pointer + 1);
 
@@ -122,73 +129,72 @@ int image_backend_png(void* buffer, struct pixel_buffer* data)
             {
                 struct png_24bpp color = pixels[x];
                 
-                
                 if (filter_type == 1)
                 {
-                    struct Pixel last = (struct Pixel){.r = 0, .g = 0, .b = 0, .a = 0};
-
                     if (x > 0)
                     {
-                        last = ((struct Pixel*)data->raw_buffer)[y * data->width + x - 1];
+                        struct png_24bpp last = dest_line_pointer[x - 1];
+                        dest_line_pointer[x] = (struct png_24bpp){.r = last.r + color.r, .g = last.g + color.g, .b = last.b + color.b};
                     }
-
-                    ((struct Pixel*)data->raw_buffer)[y * data->width + x] = (struct Pixel){.r = last.r + color.r, .g = last.g + color.g, .b = last.b + color.b, .a = 255};
+                    else
+                    {
+                        dest_line_pointer[x] = color;
+                    }
                 }
                 else if (filter_type == 2)
                 {
-                    struct Pixel last = (struct Pixel){.r = 0, .g = 0, .b = 0, .a = 0};
-
                     if (y > 0)
                     {
-                        last = ((struct Pixel*)data->raw_buffer)[(y - 1) * data->width + x];
+                        struct png_24bpp last = dest_line_pointer_prev[x];
+                        dest_line_pointer[x] = (struct png_24bpp){.r = last.r + color.r, .g = last.g + color.g, .b = last.b + color.b};
                     }
-
-                    ((struct Pixel*)data->raw_buffer)[y * data->width + x] = (struct Pixel){.r = last.r + color.r, .g = last.g + color.g, .b = last.b + color.b, .a = 255};
+                    else
+                    {
+                        dest_line_pointer[x] = color;
+                    }
                 }
                 else if (filter_type == 3)
                 {
-                    struct Pixel up = (struct Pixel){.r = 0, .g = 0, .b = 0, .a = 0};
-                    struct Pixel left = (struct Pixel){.r = 0, .g = 0, .b = 0, .a = 0};
+                    struct png_24bpp up = (struct png_24bpp){.r = 0, .g = 0, .b = 0};
+                    struct png_24bpp left = (struct png_24bpp){.r = 0, .g = 0, .b = 0};
 
-                    if (x > 0)
-                    {
-                        left = ((struct Pixel*)data->raw_buffer)[y * data->width + x - 1];
-                    }
                     if (y > 0)
                     {
-                        up = ((struct Pixel*)data->raw_buffer)[(y - 1) * data->width + x];
+                        up = dest_line_pointer_prev[x];
+                    }
+                    if (x > 0)
+                    {
+                        left = dest_line_pointer[x - 1];
                     }
 
-                    struct Pixel last = (struct Pixel){.r = ((size_t)left.r + (size_t)up.r) / 2, .g = ((size_t)left.g + (size_t)up.g) / 2, .b = ((size_t)left.b + (size_t)up.b) / 2};
-
-                    ((struct Pixel*)data->raw_buffer)[y * data->width + x] = (struct Pixel){.r = last.r + color.r, .g = last.g + color.g, .b = last.b + color.b, .a = 255};
+                    dest_line_pointer[x] = (struct png_24bpp){.r = (up.r + left.r) / 2 + color.r, .g = (up.g + left.g) / 2 + color.g, .b = (up.b + left.b) / 2 + color.b};
                 }
                 else if (filter_type == 4)
                 {
-                    struct Pixel up = (struct Pixel){.r = 0, .g = 0, .b = 0, .a = 0};
-                    struct Pixel left = (struct Pixel){.r = 0, .g = 0, .b = 0, .a = 0};
-                    struct Pixel ul = (struct Pixel){.r = 0, .g = 0, .b = 0, .a = 0};
+                    struct png_24bpp up = (struct png_24bpp){.r = 0, .g = 0, .b = 0};
+                    struct png_24bpp left = (struct png_24bpp){.r = 0, .g = 0, .b = 0};
+                    struct png_24bpp up_left = (struct png_24bpp){.r = 0, .g = 0, .b = 0};
 
-                    if (x > 0)
-                    {
-                        left = ((struct Pixel*)data->raw_buffer)[y * data->width + x - 1];
-                    }
                     if (y > 0)
                     {
-                        up = ((struct Pixel*)data->raw_buffer)[(y - 1) * data->width + x];
+                        up = dest_line_pointer_prev[x];
+                    }
+                    if (x > 0)
+                    {
+                        left = dest_line_pointer[x - 1];
                     }
                     if (x > 0 && y > 0)
                     {
-                        ul = ((struct Pixel*)data->raw_buffer)[(y - 1) * data->width + x - 1];
+                        up_left = dest_line_pointer_prev[x - 1];
                     }
 
-                    struct Pixel last = paeth(left, up, ul);
-
-                    ((struct Pixel*)data->raw_buffer)[y * data->width + x] = (struct Pixel){.r = last.r + color.r, .g = last.g + color.g, .b = last.b + color.b, .a = 255};
+                    struct png_24bpp last;
+                    paeth(&last, &left, &up, &up_left, 3);
+                    dest_line_pointer[x] = (struct png_24bpp){.r = last.r + color.r, .g = last.g + color.g, .b = last.b + color.b};
                 }
                 else
                 {
-                    ((struct Pixel*)data->raw_buffer)[y * data->width + x] = (struct Pixel){.r = color.r, .g = color.g, .b = color.b, .a = 255};
+                    dest_line_pointer[x] = color;
                 }
             }
         }
@@ -227,7 +233,7 @@ int handle_metadata_chunk(void* buffer, struct pixel_buffer* data)
         assert(0);
     }
 
-    *data = alloc_pixel_buffer(RGBA32, (size_t)BIG_ENDIAN32(chunk_data->width), (size_t)BIG_ENDIAN32(chunk_data->height));
+    *data = alloc_pixel_buffer(RGB24, (size_t)BIG_ENDIAN32(chunk_data->width), (size_t)BIG_ENDIAN32(chunk_data->height));
 
     return 0;
 }
