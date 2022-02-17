@@ -12,7 +12,7 @@
 #define WIDTH 33
 #define HEIGHT 30
 
-void start_shell()
+void start_shell(const char** envp)
 {
     const char* name = "/bin/shell";
     const char* argv[2];
@@ -20,18 +20,11 @@ void start_shell()
     argv[0] = name;
     argv[1] = 0;
 
-    const char* envp[1];
-
-    envp[0] = 0;
 
     sys_execve("/bin/shell", argv, envp);
 }
-int main(int argc, char** argv)
+int main(int argc, char** argv, const char** envp)
 {
-    const char* envp[1];
-
-    envp[0] = 0;
-
     int fd = sys_open("/dev/tty0", O_RDONLY);
     sys_dup2(fd, 0);
     fd = sys_open("/dev/tty0", O_RDONLY);
