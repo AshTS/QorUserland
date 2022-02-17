@@ -50,7 +50,7 @@ void handler(int sig, struct siginfo_t *info, void *ucontext)
 
 bool read_line_from(int fd, char** line);
 
-int main(int argc, char** argv)
+int main(int argc, char** argv, const char** envp)
 {
     tcgetattr(STDIN_FILENO, &terminal_settings);
 
@@ -78,9 +78,6 @@ int main(int argc, char** argv)
     new.sa_sigaction = handler;
 
     sys_sigaction(SIGINT, &new, &old);
-
-    char* envp[1];
-    envp[0] = 0;
 
     char* this_argv[64];
     this_argv[0] = 0;
@@ -136,7 +133,7 @@ int main(int argc, char** argv)
 
         if (buffer[0] == 'c' && buffer[1] == 'd' && buffer[2] == ' ')
         {
-            char path_buffer[32];
+            char path_buffer[64];
 
             int i = 2;
 

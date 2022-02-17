@@ -25,18 +25,15 @@ int compare_strings(const void* a, const void* b)
     return strcmp(*(const char**)a, *(const char**)b);
 }
 
-int main()
+int main(int argc, const char** argv, const char** envp)
 {
-    char* envp[1];
-    envp[0] = 0;
-
     setup_stdio();
 
     DIR* directory = opendir(INIT_DIRECTORY);
 
     if (directory == 0)
     {
-        KERNEL_LOG("Unable to open starup directory `%s`\n", INIT_DIRECTORY);
+        KERNEL_LOG("Unable to open startup directory `%s`\n", INIT_DIRECTORY);
         return 1;
     }
     else
