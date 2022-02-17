@@ -133,7 +133,13 @@ int execute_from_args(int argc, const char** argv, const char** envp, int* retur
             }
         }
 
-        // In the child process
+        // Set the current process as the terminal's foreground group
+        pid_t child_pid = sys_getpid();
+        sys_setpgid(child_pid, child_pid);
+
+        tcsetpgrp(STDIN_FILENO, child_pid);
+
+        // Execute the program
         try_all_paths(argc, argv, envp);
 
         // If we are still in this process at this point, the load failed
@@ -143,6 +149,7 @@ int execute_from_args(int argc, const char** argv, const char** envp, int* retur
     else
     {
         // In the parent process
+        errno = 0;
 
         // Wait for the process to finish before looping back
         sys_wait(return_value);
