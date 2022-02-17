@@ -50,19 +50,23 @@ void print_line_number(size_t line)
 
 void print_file(char* name)
 {
+    FILE* file;
     if (strcmp(name, "-") == 0)
     {
-        assert(0 && "Not yet Implemented: cat does not yet implement the ability to print from stdin");
+        // assert(0 && "Not yet Implemented: cat does not yet implement the ability to print from stdin");
+        file = stdin;
     }
-
-    errno = 0;
-
-    FILE* file = fopen(name, "r");
-
-    if (file == 0 || errno != 0)
+    else
     {
-        fprintf(stderr, "Unable to open file `%s`: %s\n", name, strerror(errno));
-        exit(1);
+        errno = 0;
+
+        file = fopen(name, "r");
+
+        if (file == 0 || errno != 0)
+        {
+            fprintf(stderr, "Unable to open file `%s`: %s\n", name, strerror(errno));
+            exit(1);
+        }
     }
 
     char buffer[1024];
