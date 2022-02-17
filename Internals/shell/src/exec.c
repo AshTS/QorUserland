@@ -86,6 +86,19 @@ int find_redirection(int argc, const char** argv)
     return -1;
 }
 
+int find_input_redirection(int argc, const char** argv)
+{
+    for (int i = 0; i < argc; i++)
+    {
+        if (strcmp("<", argv[i]) == 0)
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 int execute_from_args(int argc, const char** argv, const char** envp, int* return_value)
 {
     pid_t pid = sys_fork();
@@ -96,7 +109,6 @@ int execute_from_args(int argc, const char** argv, const char** envp, int* retur
         int redirection_index;
         if ((redirection_index = find_redirection(argc, argv)) >= 1)
         {
-            eprintf("%i\n", redirection_index);
             // If there is a redirection, open the file (if it exists)
             if (redirection_index + 1 < argc)
             {
@@ -113,7 +125,7 @@ int execute_from_args(int argc, const char** argv, const char** envp, int* retur
 
                 if (result < 0)
                 {
-                    eprintf("Unable to redirect to file: %s\n", strerror(-result));
+                    eprintf("Unable to redirect output to file: %s\n", strerror(-result));
                     exit(-1);
                 }
 
@@ -129,6 +141,44 @@ int execute_from_args(int argc, const char** argv, const char** envp, int* retur
             else
             {
                 eprintf("No file given to redirect to\n");
+                exit(-1);
+            }
+        }
+        // Next, check if there needs to be an input redirection (a chevron, not a pipe)
+        else if ((redirection_index = find_input_redirection(argc, argv)) >= 1)
+        {
+            // If there is a redirection, open the file
+            if (redirection_index + 1 < argc)
+            {
+                char* name = argv[redirection_index + 1];
+                int fd = sys_open(name, O_RDONLY);
+
+                if (fd < 0)
+                {
+                    eprintf("Unable to open file `%s`: %s\n", name, strerror(-fd));
+                    exit(-1);
+                }
+
+                int result = sys_dup2(fd, 0);
+
+                if (result < 0)
+                {
+                    eprintf("Unable to redirect input to file: %s\n", strerror(-result));
+                    exit(-1);
+                }
+
+                for (int i = redirection_index + 2; i < argc; i++)
+                {
+                    argv[i - 2] = argv[i];
+                }
+
+                argc -= 2;
+
+                argv[argc] = NULL;
+            }
+            else
+            {
+                eprintf("No file given to input redirection to\n");
                 exit(-1);
             }
         }
