@@ -5,6 +5,8 @@
 #include <libc/string.h>
 #include <libc/sys/syscalls.h>
 #include <libc/sys/types.h>
+#include <libc/termios.h>
+#include <libc/unistd.h>
 
 // Update the path stored interally
 char* get_path();
@@ -177,4 +179,16 @@ int command_cd(int argc, const char** argv, const char** envp)
     }
 
     return 0;
+}
+
+static struct termios terminal_settings;
+
+void save_tty_settings()
+{
+    tcgetattr(STDIN_FILENO, &terminal_settings);
+}
+
+void load_tty_settings()
+{
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &terminal_settings);
 }

@@ -7,4 +7,7 @@ int execute_from_args(int argc, const char** argv, const char** envp, int* retur
 
 int command_cd(int argc, const char** argv, const char** envp);
 
+void save_tty_settings();
+void load_tty_settings();
+
 #endif EXEC_H

@@ -1,5 +1,5 @@
 CC = clang
-CFLAGS = --target=riscv64 -march=rv64gc -mno-relax
+CFLAGS = --target=riscv64 -march=rv64gc -mno-relax -g
 INCLUDE_DIR = ${qorIncludePath}
 
 LINK = ld.lld
@@ -16,7 +16,7 @@ SRC_DIR = src
 _LIBS = libc.a
 LIBS = $(patsubst %,$(LIB_DIR)/%,$(_LIBS))
 
-_OBJ = main.o
+_OBJ = main.o exec.o
 OBJ = $(patsubst %,$(BUILD_DIR)/%,$(_OBJ))
 
 RAW_INCLUDES = $(patsubst %, $(INCLUDE_DIR)/%, $(INCLUDES))

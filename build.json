@@ -52,13 +52,6 @@
         "bin-path": "qor-userland/Internals/term/bin/term",
         "output-path": "/bin/term"
     },
-
-    {
-        "name": "Dev-Shell",
-        "make-path": "qor-userland/Internals/shell2",
-        "bin-path": "qor-userland/Internals/shell2/bin/shell2",
-        "output-path": "/bin/shell2"
-    },
     {
         "name": "Hello",
         "make-path": "qor-userland/Examples/hello",
