@@ -4,6 +4,7 @@
 #include <libc/stdlib.h>
 #include <libc/string.h>
 #include <libc/stdio.h>
+#include <libc/sys/syscalls.h>
 
 #include "exec.h"
 

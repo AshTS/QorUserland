@@ -1,5 +1,6 @@
 #include "exec.h"
 
+#include <libc/errno.h>
 #include <libc/stdio.h>
 #include <libc/stdlib.h>
 #include <libc/string.h>
@@ -72,18 +73,72 @@ int try_all_paths(int argc, const char** argv, const char** envp)
     }
 }
 
+int find_redirection(int argc, const char** argv)
+{
+    for (int i = 0; i < argc; i++)
+    {
+        if (strcmp(">", argv[i]) == 0)
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 int execute_from_args(int argc, const char** argv, const char** envp, int* return_value)
 {
     pid_t pid = sys_fork();
     
     if (pid == 0)
     {
+        // First, check if there needs to be a redirection (a chevron, not a pipe)
+        int redirection_index;
+        if ((redirection_index = find_redirection(argc, argv)) >= 1)
+        {
+            eprintf("%i\n", redirection_index);
+            // If there is a redirection, open the file (if it exists)
+            if (redirection_index + 1 < argc)
+            {
+                char* name = argv[redirection_index + 1];
+                int fd = sys_open(name, O_CREAT | O_RDWR);
+
+                if (fd < 0)
+                {
+                    eprintf("Unable to open or create file `%s`: %s\n", name, strerror(-fd));
+                    exit(-1);
+                }
+
+                int result = sys_dup2(fd, 1);
+
+                if (result < 0)
+                {
+                    eprintf("Unable to redirect to file: %s\n", strerror(-result));
+                    exit(-1);
+                }
+
+                for (int i = redirection_index + 2; i < argc; i++)
+                {
+                    argv[i - 2] = argv[i];
+                }
+
+                argc -= 2;
+
+                argv[argc] = NULL;
+            }
+            else
+            {
+                eprintf("No file given to redirect to\n");
+                exit(-1);
+            }
+        }
+
         // In the child process
         try_all_paths(argc, argv, envp);
 
         // If we are still in this process at this point, the load failed
-        printf("Unable to load executable `%s`\n", argv[0]);
-        *return_value = 127;
+        eprintf("Unable to load executable `%s`\n", argv[0]);
+        exit(-1);
     }
     else
     {
@@ -108,7 +163,7 @@ char* get_path()
 
     if (MALLOCED_PATH == NULL)
     {
-        printf("Error: Unable to allocate MALLOCED_PATH\n");
+        eprintf("Error: Unable to allocate MALLOCED_PATH\n");
         exit(1);
     }
 
@@ -137,7 +192,7 @@ char* get_path_entry(int index)
 
     if (MALLOCED_PATH == NULL)
     {
-        printf("Error: MALLOCED_PATH is not allocated when PATH has been.\n");
+        eprintf("Error: MALLOCED_PATH is not allocated when PATH has been.\n");
         exit(1);
     }
 
@@ -191,4 +246,20 @@ void save_tty_settings()
 void load_tty_settings()
 {
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &terminal_settings);
+}
+
+bool check_exist(const char* fname)
+{
+    errno = 0;
+    FILE* stream = fopen(fname, "rb");
+
+    if (stream == NULL || errno)
+    {
+        errno = 0;
+        return false;
+    }
+    
+    fclose(stream);
+
+    return true;
 }
