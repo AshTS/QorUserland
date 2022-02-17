@@ -55,7 +55,21 @@ int main(int argc, char** argv, const char** envp)
                     continue;
                 }
 
-                execute_from_args(count, arguments, envp, &RETURN_CODE);
+                // If the command is quit, the shell can be terminated
+                if (strcmp(arguments[0], "quit") == 0)
+                {
+                    break;
+                }
+                // If the command is cd, run the cd operation
+                else if (strcmp(arguments[0], "cd") == 0)
+                {
+                    RETURN_CODE = command_cd(count, arguments, envp);
+                }
+                // Otherwise, attempt to execute it as an executable program
+                else
+                {
+                    execute_from_args(count, arguments, envp, &RETURN_CODE);
+                }
             }
         }
         else

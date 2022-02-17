@@ -58,7 +58,7 @@ int try_all_paths(int argc, const char** argv, const char** envp)
         strcpy(buffer, path_prefix);
         strcat(buffer, "/");
         strcat(buffer, argv[0]);
-        
+
         char* argv_0_backup = argv[0];
         argv[0] = buffer;
 
@@ -153,4 +153,28 @@ char* get_path_entry(int index)
     }
 
     return NULL;
+}
+
+int command_cd(int argc, const char** argv, const char** envp)
+{
+    // The cd command only accepts one argument
+    if (argc == 1)
+    {
+        printf("cd requires one argument.\n");
+        return 1;
+    }
+    else if (argc > 2)
+    {
+        printf("cd requires only one argument.\n");
+        return 1;
+    }
+
+    // Execute the change directory syscall
+    if (sys_chdir(argv[1]) == -1)
+    {
+        printf("Unable to switch to `%s`\n", argv[1]);
+        return 1;
+    }
+
+    return 0;
 }
