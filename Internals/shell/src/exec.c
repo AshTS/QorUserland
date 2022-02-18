@@ -73,31 +73,6 @@ int try_all_paths(int argc, const char** argv, const char** envp)
     }
 }
 
-int find_redirection(int argc, const char** argv)
-{
-    for (int i = 0; i < argc; i++)
-    {
-        if (strcmp(">", argv[i]) == 0)
-        {
-            return i;
-        }
-    }
-
-    return -1;
-}
-
-int find_input_redirection(int argc, const char** argv)
-{
-    for (int i = 0; i < argc; i++)
-    {
-        if (strcmp("<", argv[i]) == 0)
-        {
-            return i;
-        }
-    }
-
-    return -1;
-}
 
 int execute_from_args(int argc, const char** argv, const char** envp, int* return_value)
 {
@@ -105,81 +80,132 @@ int execute_from_args(int argc, const char** argv, const char** envp, int* retur
     
     if (pid == 0)
     {
-        // First, check if there needs to be a redirection (a chevron, not a pipe)
-        int redirection_index;
-        if ((redirection_index = find_redirection(argc, argv)) >= 1)
+        int walking_index = 0;
+        // Repeatedly check for redirections or pipes
+        while (walking_index < argc)
         {
-            // If there is a redirection, open the file (if it exists)
-            if (redirection_index + 1 < argc)
+            if (strcmp(argv[walking_index], ">") == 0)
             {
-                char* name = argv[redirection_index + 1];
-                int fd = sys_open(name, O_CREAT | O_RDWR);
-
-                if (fd < 0)
+                // Make sure that there exists a file
+                if (walking_index + 1 >= argc)
                 {
-                    eprintf("Unable to open or create file `%s`: %s\n", name, strerror(-fd));
+                    eprintf("No file given for redirection\n");
                     exit(-1);
                 }
 
-                int result = sys_dup2(fd, 1);
+                char* filename = argv[walking_index + 1];
+
+                // Try to open the file
+                int file_descriptor = open(filename, O_CREAT | O_RDWR);
+
+                if (file_descriptor < 0)
+                {
+                    eprintf("Unable to open or create file `%s`: %s\n", filename, strerror(-file_descriptor));
+                    exit(-1);
+                }
+
+                // Apply the redirection
+                int result = sys_dup2(file_descriptor, 1);
 
                 if (result < 0)
                 {
-                    eprintf("Unable to redirect output to file: %s\n", strerror(-result));
+                    eprintf("Unable to apply redirection: %s\n", filename, strerror(-result));
                     exit(-1);
                 }
 
-                for (int i = redirection_index + 2; i < argc; i++)
+                // Modify the argv
+                for (int i = walking_index + 2; i < argc; i++)
                 {
                     argv[i - 2] = argv[i];
                 }
 
+                argv[walking_index] = 0;
+
                 argc -= 2;
-
-                argv[argc] = NULL;
             }
-            else
+            else if (strcmp(argv[walking_index], "<") == 0)
             {
-                eprintf("No file given to redirect to\n");
-                exit(-1);
-            }
-        }
-        // Next, check if there needs to be an input redirection (a chevron, not a pipe)
-        else if ((redirection_index = find_input_redirection(argc, argv)) >= 1)
-        {
-            // If there is a redirection, open the file
-            if (redirection_index + 1 < argc)
-            {
-                char* name = argv[redirection_index + 1];
-                int fd = sys_open(name, O_RDONLY);
-
-                if (fd < 0)
+                // Make sure that there exists a file
+                if (walking_index + 1 >= argc)
                 {
-                    eprintf("Unable to open file `%s`: %s\n", name, strerror(-fd));
+                    eprintf("No file given for input redirection\n");
                     exit(-1);
                 }
 
-                int result = sys_dup2(fd, 0);
+                char* filename = argv[walking_index + 1];
+
+                // Try to open the file
+                int file_descriptor = open(filename, O_RDONLY);
+
+                if (file_descriptor < 0)
+                {
+                    eprintf("Unable to open or file `%s`: %s\n", filename, strerror(-file_descriptor));
+                    exit(-1);
+                }
+
+                // Apply the redirection
+                int result = sys_dup2(file_descriptor, 0);
 
                 if (result < 0)
                 {
-                    eprintf("Unable to redirect input to file: %s\n", strerror(-result));
+                    eprintf("Unable to apply input redirection: %s\n", filename, strerror(-result));
                     exit(-1);
                 }
 
-                for (int i = redirection_index + 2; i < argc; i++)
+                // Modify the argv
+                for (int i = walking_index + 2; i < argc; i++)
                 {
                     argv[i - 2] = argv[i];
                 }
 
-                argc -= 2;
+                argv[walking_index] = 0;
 
-                argv[argc] = NULL;
+                argc -= 2;
+            }
+            else if (strcmp(argv[walking_index], "|") == 0)
+            {
+                // First, delete the pipe symbol
+                argv[walking_index] = 0;
+
+                // Next, create the pipe
+                int fds[2];
+                int result = sys_pipe(fds);
+
+                if (result < 0)
+                {
+                    eprintf("Unable to create pipe: %s\n", strerror(result));
+                    exit(-1);
+                }
+
+                // Next, backup the previous read descriptor
+                int backup_read = sys_dup(0);
+
+                if (backup_read < 0)
+                {
+                    eprintf("Unable to backup the read descriptor: %s\n", strerror(backup_read));
+                    exit(-1);
+                }
+
+                // Redirect the read end of the pipe as the input to the second half of the pipe
+                result = sys_dup2(fds[0], 0);
+
+                // Run the second half of the pipe
+                execute_from_args(argc - walking_index - 1, argv + walking_index + 1, envp, return_value);
+
+                // Replace the read end of the pipe
+                result = sys_dup2(backup_read, 0);
+
+                // Replace the write end of the pipe
+                result = sys_dup2(fds[1], 1);
+
+                // Step back the size of argv
+                argc = walking_index;
+
+                break;
             }
             else
             {
-                eprintf("No file given to input redirection to\n");
-                exit(-1);
+                walking_index++;
             }
         }
 
@@ -195,14 +221,6 @@ int execute_from_args(int argc, const char** argv, const char** envp, int* retur
         // If we are still in this process at this point, the load failed
         eprintf("Unable to load executable `%s`\n", argv[0]);
         exit(-1);
-    }
-    else
-    {
-        // In the parent process
-        errno = 0;
-
-        // Wait for the process to finish before looping back
-        sys_wait(return_value);
     }
 }
 

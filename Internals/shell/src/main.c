@@ -77,6 +77,10 @@ int main(int argc, char** argv, const char** envp)
                 else
                 {
                     execute_from_args(count, arguments, envp, &RETURN_CODE);
+
+                    // Wait for the process to finish before looping back
+                    errno = 0;
+                    while (sys_wait(&RETURN_CODE) > 0);
                 }
             }
         }
