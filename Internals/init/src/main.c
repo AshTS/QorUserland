@@ -5,7 +5,7 @@
 #include <libc/stdlib.h>
 
 #define INIT_DIRECTORY "/etc/startup.d"
-#define KERNEL_LOG(...) { int lfd = sys_open("/var/syslog", O_APPEND); raw_fprintf(lfd, __VA_ARGS__); sys_close(lfd); }
+#define SYSTEM_LOG(...) { int lfd = sys_open("/var/syslog", O_APPEND); raw_fprintf(lfd, __VA_ARGS__); sys_close(lfd); }
 
 void setup_stdio()
 {
@@ -33,7 +33,7 @@ int main(int argc, const char** argv, const char** envp)
 
     if (directory == 0)
     {
-        KERNEL_LOG("Unable to open startup directory `%s`\n", INIT_DIRECTORY);
+        SYSTEM_LOG("Unable to open startup directory `%s`\n", INIT_DIRECTORY);
         return 1;
     }
     else
@@ -66,13 +66,13 @@ int main(int argc, const char** argv, const char** envp)
             buffer[count - 1] = entry->d_name;
         }
 
-        KERNEL_LOG("Found %i Files\n", count);
+        SYSTEM_LOG("Found %i Files\n", count);
 
         qsort(buffer, count, sizeof(char*), compare_strings);
 
         for (int i = 0; i < count; i++)
         {
-            KERNEL_LOG("Executing %s\n", buffer[i]);
+            SYSTEM_LOG("Executing %s\n", buffer[i]);
             char path[256];
             sprintf(path, INIT_DIRECTORY "/%s", buffer[i]);
             char* argv[2];
@@ -84,11 +84,11 @@ int main(int argc, const char** argv, const char** envp)
         free(buffer);
     }
 
-    KERNEL_LOG("Shutting Down\n");
+    SYSTEM_LOG("Shutting Down\n");
 
     closedir(directory);
 
-    sys_sync();
+    sys_reboot(REBOOT_MAGIC1, REBOOT_MAGIC2, REBOOT_CMD_HALT, NULL);
 }
 
 int execute_process(char** argv, char** envp)
