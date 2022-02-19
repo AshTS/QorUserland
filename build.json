@@ -143,6 +143,12 @@
         "output-path": "/bin/uzip"
     },
     {
+        "name": "touch",
+        "make-path": "qor-userland/Utils/touch",
+        "bin-path": "qor-userland/Utils/touch/bin/touch",
+        "output-path": "/bin/touch"
+    }, 
+    {
         "name": "spin",
         "make-path": "qor-userland/Games/spin",
         "bin-path": "qor-userland/Games/spin/bin/spin",
