@@ -155,6 +155,12 @@
         "output-path": "/bin/shutdown"
     },
     {
+        "name": "qordle",
+        "make-path": "qor-userland/Games/qordle",
+        "bin-path": "qor-userland/Games/qordle/bin/qordle",
+        "output-path": "/bin/qordle"
+    },
+    {
         "name": "spin",
         "make-path": "qor-userland/Games/spin",
         "bin-path": "qor-userland/Games/spin/bin/spin",
