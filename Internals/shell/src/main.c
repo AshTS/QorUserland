@@ -44,9 +44,15 @@ int main(int argc, char** argv, const char** envp)
             display_tag();
 
         char buffer[1024];
-        if (fgets(buffer, 1023, input_stream) != NULL)
+        if (fgets(buffer, 1000, input_stream) != NULL)
         {
             char* arguments[32];
+
+            int len = strlen(buffer);
+            if (buffer[len - 1] == '\n')
+            {
+                buffer[len - 1] = 0;
+            }
 
             int count = string_to_arguments(buffer, arguments, 32);
 

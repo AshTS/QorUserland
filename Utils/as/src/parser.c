@@ -119,7 +119,7 @@ char* render_token(Token* token)
             count = sprintf(BUFFER, "String(%s)", token->data.str);
             assert(count < buf_len);
             break;
-        case EOF:
+        case EOFTOK:
             count = sprintf(BUFFER, "EOF");
             assert(count < buf_len);
             break;
@@ -507,7 +507,7 @@ Token* tokenize_buffer(char* buffer, char* filename, size_t* count)
     struct Token eof;
 
     eof.location = LOCATION(filename, line_number + 1, 0);
-    eof.type = EOF;
+    eof.type = EOFTOK;
 
     ADD_TOKEN(eof);
 

@@ -150,7 +150,7 @@ struct GenerationSettings* generate(Token* tokens, size_t count, size_t* section
 
     struct GenerationSettings* settings = settings_alloc_new();
 
-    while (tokens->type != EOF)
+    while (tokens->type != EOFTOK)
     {
         if (!parse_code(&tokens, settings, &error))
         {

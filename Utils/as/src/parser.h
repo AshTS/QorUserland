@@ -33,7 +33,7 @@ enum TokenType
     INSTRUCTION,
     NUMBER,
     STRING,
-    EOF
+    EOFTOK
 };
 
 typedef struct Token
