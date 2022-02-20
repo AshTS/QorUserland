@@ -147,7 +147,13 @@
         "make-path": "qor-userland/Utils/touch",
         "bin-path": "qor-userland/Utils/touch/bin/touch",
         "output-path": "/bin/touch"
-    }, 
+    },
+    {
+        "name": "shutdown",
+        "make-path": "qor-userland/Utils/shutdown",
+        "bin-path": "qor-userland/Utils/shutdown/bin/shutdown",
+        "output-path": "/bin/shutdown"
+    },
     {
         "name": "spin",
         "make-path": "qor-userland/Games/spin",
