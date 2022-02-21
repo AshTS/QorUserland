@@ -58,6 +58,8 @@ int main(int argc, char** argv, const char** envp)
 
             if (count != 0)
             {
+                bool run_as_daemon = strcmp(arguments[count - 1], "&") == 0;
+
                 // If the command starts with a "#", then it is a comment and can be ignored
                 if (arguments[0][0] == '#')
                 {
@@ -82,11 +84,14 @@ int main(int argc, char** argv, const char** envp)
                 // Otherwise, attempt to execute it as an executable program
                 else
                 {
-                    execute_from_args(count, arguments, envp, &RETURN_CODE);
+                    pid_t pid = execute_from_args(count, arguments, envp, &RETURN_CODE, run_as_daemon);
 
-                    // Wait for the process to finish before looping back
-                    errno = 0;
-                    while (sys_wait(&RETURN_CODE) > 0);
+                    // Wait for the process to finish before looping back   
+                    if (!run_as_daemon)
+                    {
+                        errno = 0;
+                        while (sys_wait(&RETURN_CODE) != pid);
+                    }
                 }
             }
         }

@@ -74,7 +74,7 @@ int try_all_paths(int argc, const char** argv, const char** envp)
 }
 
 
-int execute_from_args(int argc, const char** argv, const char** envp, int* return_value)
+int execute_from_args(int argc, const char** argv, const char** envp, int* return_value, bool as_daemon)
 {
     pid_t pid = sys_fork();
     
@@ -190,7 +190,7 @@ int execute_from_args(int argc, const char** argv, const char** envp, int* retur
                 result = sys_dup2(fds[0], 0);
 
                 // Run the second half of the pipe
-                execute_from_args(argc - walking_index - 1, argv + walking_index + 1, envp, return_value);
+                execute_from_args(argc - walking_index - 1, argv + walking_index + 1, envp, return_value, as_daemon);
 
                 // Replace the read end of the pipe
                 result = sys_dup2(backup_read, 0);
@@ -210,10 +210,13 @@ int execute_from_args(int argc, const char** argv, const char** envp, int* retur
         }
 
         // Set the current process as the terminal's foreground group
-        pid_t child_pid = sys_getpid();
-        sys_setpgid(child_pid, child_pid);
+        if (!as_daemon)
+        {   
+            pid_t child_pid = sys_getpid();
+            sys_setpgid(child_pid, child_pid);
 
-        tcsetpgrp(STDIN_FILENO, child_pid);
+            tcsetpgrp(STDIN_FILENO, child_pid);
+        }
 
         // Execute the program
         try_all_paths(argc, argv, envp);
@@ -222,6 +225,8 @@ int execute_from_args(int argc, const char** argv, const char** envp, int* retur
         eprintf("Unable to load executable `%s`\n", argv[0]);
         exit(-1);
     }
+
+    return pid;
 }
 
 // Update the path stored interally
