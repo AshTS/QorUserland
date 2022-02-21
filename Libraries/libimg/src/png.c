@@ -189,7 +189,7 @@ int image_backend_png(void* buffer, struct pixel_buffer* data)
                     }
 
                     struct png_24bpp last;
-                    paeth(&last, &left, &up, &up_left, 3);
+                    paeth((uint8_t*)&last, (uint8_t*)&left, (uint8_t*)&up, (uint8_t*)&up_left, 3);
                     dest_line_pointer[x] = (struct png_24bpp){.r = last.r + color.r, .g = last.g + color.g, .b = last.b + color.b};
                 }
                 else

@@ -30,7 +30,7 @@ int image_backend_bmp(void* buffer, struct pixel_buffer* data)
     *data = alloc_pixel_buffer(BGR24, (size_t)header->width, (size_t)header->height);
 
     // Get a pointer into the bitmap file at the beginning of the pixel data
-    uint8_t* pixel_data = (size_t)buffer + (size_t)header->pixel_data_offset;
+    uint8_t* pixel_data = (uint8_t*)((size_t)buffer + (size_t)header->pixel_data_offset);
 
     // Calculate the length of a line
     size_t line_length = 3 * data->width;

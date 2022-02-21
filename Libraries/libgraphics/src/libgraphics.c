@@ -187,4 +187,6 @@ int blit(struct pixel_buffer* data, size_t x, size_t y)
     result = close_framebuffer();
     if (result)
         return result;
+
+    return -1;
 }

@@ -3,9 +3,9 @@
 
 #include <libc/stdbool.h>
 
-int string_to_arguments(const char* str, char** arguments, int max);
+int string_to_arguments(char* str, char** arguments, int max);
 
-int execute_from_args(int argc, const char** argv, const char** envp, int* return_value);
+int execute_from_args(int argc, const char** argv, const char** envp, int* return_value, bool as_daemon);
 
 int command_cd(int argc, const char** argv, const char** envp);
 
@@ -14,4 +14,4 @@ void load_tty_settings();
 
 bool check_exist(const char* fname);
 
-#endif EXEC_H
+#endif // EXEC_H
