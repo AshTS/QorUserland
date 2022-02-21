@@ -38,5 +38,5 @@ int main(int argc, char** argv, const char** envp)
         start_shell();
     }
 */
-    sys_execve(argv[1], argv + 1, envp);
+    sys_execve(argv[1], (const char**)(argv + 1), envp);
 }

@@ -18,7 +18,7 @@ void setup_stdio()
     sys_dup2(c, 2);
 }
 
-int execute_process(char** argc, char** envp);
+int execute_process(char** argc, const char** envp);
 
 int compare_strings(const void* a, const void* b)
 {
@@ -78,7 +78,7 @@ int main(int argc, const char** argv, const char** envp)
             char* argv[2];
             argv[0] = path;
             argv[1] = 0;
-            execute_process(argv, envp);
+            execute_process((char**)argv, envp);
         }
 
         free(buffer);
@@ -91,14 +91,14 @@ int main(int argc, const char** argv, const char** envp)
     sys_reboot(REBOOT_MAGIC1, REBOOT_MAGIC2, REBOOT_CMD_HALT, NULL);
 }
 
-int execute_process(char** argv, char** envp)
+int execute_process(char** argv, const char** envp)
 {
     int child_pid = sys_fork();
 
     // As the child
     if (child_pid == 0)
     {
-        sys_execve(argv[0], argv, envp);
+        sys_execve(argv[0], (const char**)argv, envp);
         sys_exit(0);
     }
 

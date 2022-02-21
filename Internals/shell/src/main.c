@@ -8,7 +8,7 @@
 
 #include "exec.h"
 
-uint32_t RETURN_CODE = 0;
+int RETURN_CODE = 0;
 bool SHOW_TAG = true;
 
 void display_tag();
@@ -74,7 +74,7 @@ int main(int argc, char** argv, const char** envp)
                 // If the command is cd, run the cd operation
                 else if (strcmp(arguments[0], "cd") == 0)
                 {
-                    RETURN_CODE = command_cd(count, arguments, envp);
+                    RETURN_CODE = command_cd(count, (const char**)arguments, envp);
                 }
                 // If the command is reset, load the teletype settings
                 else if (strcmp(arguments[0], "reset") == 0)
@@ -84,7 +84,7 @@ int main(int argc, char** argv, const char** envp)
                 // Otherwise, attempt to execute it as an executable program
                 else
                 {
-                    pid_t pid = execute_from_args(count, arguments, envp, &RETURN_CODE, run_as_daemon);
+                    pid_t pid = execute_from_args(count, (const char**)arguments, envp, &RETURN_CODE, run_as_daemon);
 
                     // Wait for the process to finish before looping back   
                     if (!run_as_daemon)

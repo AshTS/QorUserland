@@ -8,6 +8,7 @@
 #include <libc/sys/types.h>
 #include <libc/termios.h>
 #include <libc/unistd.h>
+#include <libc/sys/syscalls.h>
 
 // Update the path stored interally
 char* get_path();
@@ -18,7 +19,7 @@ char* get_path_entry(int i);
 const char* PATH = NULL;
 char* MALLOCED_PATH = NULL;
 
-int string_to_arguments(const char* str, char** arguments, int max)
+int string_to_arguments(char* str, char** arguments, int max)
 {
     if (max == 0) return 0;
 
@@ -54,7 +55,7 @@ int try_all_paths(int argc, const char** argv, const char** envp)
     // Loop through every path
     int i = 0;
     char* path_prefix;
-    while (path_prefix = get_path_entry(i++))
+    while ((path_prefix = get_path_entry(i++)))
     {
         int total_length = strlen(argv[0]) + strlen(path_prefix) + 2;
         char* buffer = malloc(total_length);
@@ -62,7 +63,7 @@ int try_all_paths(int argc, const char** argv, const char** envp)
         strcat(buffer, "/");
         strcat(buffer, argv[0]);
 
-        char* argv_0_backup = argv[0];
+        const char* argv_0_backup = argv[0];
         argv[0] = buffer;
 
         sys_execve(argv[0], argv, envp);
@@ -71,6 +72,8 @@ int try_all_paths(int argc, const char** argv, const char** envp)
 
         free(buffer);
     }
+
+    return 0;
 }
 
 
@@ -93,10 +96,10 @@ int execute_from_args(int argc, const char** argv, const char** envp, int* retur
                     exit(-1);
                 }
 
-                char* filename = argv[walking_index + 1];
+                const char* filename = argv[walking_index + 1];
 
                 // Try to open the file
-                int file_descriptor = open(filename, O_CREAT | O_RDWR);
+                int file_descriptor = sys_open(filename, O_CREAT | O_RDWR);
 
                 if (file_descriptor < 0)
                 {
@@ -109,7 +112,7 @@ int execute_from_args(int argc, const char** argv, const char** envp, int* retur
 
                 if (result < 0)
                 {
-                    eprintf("Unable to apply redirection: %s\n", filename, strerror(-result));
+                    eprintf("Unable to apply redirection: %s: %sn", filename, strerror(-result));
                     exit(-1);
                 }
 
@@ -132,10 +135,10 @@ int execute_from_args(int argc, const char** argv, const char** envp, int* retur
                     exit(-1);
                 }
 
-                char* filename = argv[walking_index + 1];
+                const char* filename = argv[walking_index + 1];
 
                 // Try to open the file
-                int file_descriptor = open(filename, O_RDONLY);
+                int file_descriptor = sys_open(filename, O_RDONLY);
 
                 if (file_descriptor < 0)
                 {
@@ -148,7 +151,7 @@ int execute_from_args(int argc, const char** argv, const char** envp, int* retur
 
                 if (result < 0)
                 {
-                    eprintf("Unable to apply input redirection: %s\n", filename, strerror(-result));
+                    eprintf("Unable to apply input redirection: %s: %s\n", filename, strerror(-result));
                     exit(-1);
                 }
 
@@ -257,7 +260,7 @@ char* get_path()
         i++;
     }
 
-    return PATH;
+    return (char*)PATH;
 }
 
 // Get a path entry from the internally stored path
