@@ -5,7 +5,7 @@ INCLUDE_DIR = ${qorIncludePath}
 LINK = ld.lld
 LINKFLAGS =
 
-INCLUDES =
+INCLUDES = libc/stdio.h libc/stdlib.h libc/time.h libc/string.h
 
 LIB_DIR = ${qorLibPath}
 
