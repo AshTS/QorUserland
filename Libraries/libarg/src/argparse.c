@@ -90,7 +90,7 @@ char** arg_get_free(struct Arguments* args)
         {
             break;
         }
-        else if (*(args->argv[i]) == '-')
+        else if (*(args->argv[i]) == '-' && *(args->argv[i] + 1) != 0)
         {
             ptr = &(args->argv[(i + 1)]);
             if (i + 1 == args->argc)
