@@ -84,7 +84,7 @@ int main(int argc, char** argv, const char** envp)
                 // Otherwise, attempt to execute it as an executable program
                 else
                 {
-                    pid_t pid = execute_from_args(count, (const char**)arguments, envp, &RETURN_CODE, run_as_daemon);
+                    pid_t pid = execute_from_args(count, (const char**)arguments, envp, &RETURN_CODE, run_as_daemon, -1);
 
                     // Wait for the process to finish before looping back   
                     if (!run_as_daemon)

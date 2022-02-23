@@ -77,12 +77,17 @@ int try_all_paths(int argc, const char** argv, const char** envp)
 }
 
 
-int execute_from_args(int argc, const char** argv, const char** envp, int* return_value, bool as_daemon)
+int execute_from_args(int argc, const char** argv, const char** envp, int* return_value, bool as_daemon, int to_close)
 {
     pid_t pid = sys_fork();
     
     if (pid == 0)
     {
+        if (to_close >= 0)
+        {
+            sys_close(to_close);
+        }
+
         int walking_index = 0;
         // Repeatedly check for redirections or pipes
         while (walking_index < argc)
@@ -193,10 +198,13 @@ int execute_from_args(int argc, const char** argv, const char** envp, int* retur
                 result = sys_dup2(fds[0], 0);
 
                 // Run the second half of the pipe
-                execute_from_args(argc - walking_index - 1, argv + walking_index + 1, envp, return_value, as_daemon);
+                execute_from_args(argc - walking_index - 1, argv + walking_index + 1, envp, return_value, as_daemon, fds[1]);
 
                 // Replace the read end of the pipe
                 result = sys_dup2(backup_read, 0);
+
+                // Close the read end
+                sys_close(fds[0]);
 
                 // Replace the write end of the pipe
                 result = sys_dup2(fds[1], 1);

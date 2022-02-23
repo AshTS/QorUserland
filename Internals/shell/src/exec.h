@@ -5,7 +5,7 @@
 
 int string_to_arguments(char* str, char** arguments, int max);
 
-int execute_from_args(int argc, const char** argv, const char** envp, int* return_value, bool as_daemon);
+int execute_from_args(int argc, const char** argv, const char** envp, int* return_value, bool as_daemon, int to_close);
 
 int command_cd(int argc, const char** argv, const char** envp);
 
