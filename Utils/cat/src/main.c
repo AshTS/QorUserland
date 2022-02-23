@@ -53,7 +53,6 @@ void print_file(char* name)
     FILE* file;
     if (strcmp(name, "-") == 0)
     {
-        // assert(0 && "Not yet Implemented: cat does not yet implement the ability to print from stdin");
         file = stdin;
     }
     else
@@ -69,46 +68,31 @@ void print_file(char* name)
         }
     }
 
-    char buffer[1024];
+    char buffer[4096];
     size_t count;
 
     size_t line = 1;
 
-    if (show_lines) { print_line_number(line); }
-
-    while ((count = fread(buffer, 1, 1023, file)))
+    while (fgets(buffer, 4095, file))
     {
-        if (errno != 0)
+        if (show_lines) { print_line_number(line); }
+
+        int length = strlen(buffer);
+
+        if (buffer[length - 1] == '\n')
         {
-            fprintf(stderr, "Unable to read file `%s`: %s\n", name, strerror(errno));
-            exit(1);
+            buffer[length - 1] = 0;
         }
 
-        buffer[count] = 0;
-
-        if (!show_lines)
-        {
-            printf("%s", buffer);
-        }
-        else
-        {
-            char* walk = buffer;
-            char* ptr;
-
-            while ((ptr = strchr(walk, '\n')))
-            {
-                *ptr = '\0';
-
-                printf("%s\n", walk);
-                walk = ptr + 1;
-                print_line_number(++line);
-            }
-
-            printf("%s", walk);
-        }
+        printf("%s\n", buffer);
+        line++;
     }
 
-    printf("\n");
+    if (errno)
+    {
+        perror("file read");
+        exit(1);
+    }
 }
 
 void show_usage(char* prog_name)
