@@ -145,7 +145,7 @@ void load_lines_from(FILE* stream)
 
     while (fgets(line_buffer, 1023, stream))
     {
-        add_line_to_buffer((const char*)line_buffer);
+        add_line_to_buffer(line_buffer);
     }
 
     if (errno != 0)
