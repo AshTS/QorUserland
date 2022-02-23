@@ -155,6 +155,12 @@
         "output-path": "/bin/shutdown"
     },
     {
+        "name": "sort",
+        "make-path": "qor-userland/Utils/sort",
+        "bin-path": "qor-userland/Utils/sort/bin/sort",
+        "output-path": "/bin/sort"
+    },
+    {
         "name": "spin",
         "make-path": "qor-userland/Games/spin",
         "bin-path": "qor-userland/Games/spin/bin/spin",
