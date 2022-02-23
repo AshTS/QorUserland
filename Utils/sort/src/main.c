@@ -157,5 +157,5 @@ void load_lines_from(FILE* stream)
 
 int cmp(const void* a, const void* b)
 {
-    return strcmp(*((char**) a), *((char**) b)) * reverse ? -1 : 1;
+    return strcmp(*((char**) a), *((char**) b)) * (reverse ? -1 : 1);
 }
