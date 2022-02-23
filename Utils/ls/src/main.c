@@ -64,6 +64,8 @@ void do_list(char* dir_name)
     int line_total = 0;
     int width = 16;
 
+    const char* format = show_lines ? "%s" : "%16s";
+
     while ((entry = readdir(directory)))
     {
         if (!show_all && entry->d_name[0] == '.')
@@ -71,7 +73,7 @@ void do_list(char* dir_name)
             continue;
         }
 
-        line_total += printf("%16s", entry->d_name);
+        line_total += printf(format, entry->d_name);
 
         if (show_lines || line_total + width >= 80)
         {
