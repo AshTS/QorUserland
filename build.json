@@ -95,6 +95,12 @@
         "output-path": "/bin/mkdir"
     },
     {
+        "name": "rm",
+        "make-path": "qor-userland/Utils/rm",
+        "bin-path": "qor-userland/Utils/rm/bin/rm",
+        "output-path": "/bin/rm"
+    },
+    {
         "name": "sync",
         "make-path": "qor-userland/Utils/sync",
         "bin-path": "qor-userland/Utils/sync/bin/sync",
