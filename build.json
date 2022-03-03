@@ -113,6 +113,12 @@
         "output-path": "/bin/echo"
     },
     {
+        "name": "stat",
+        "make-path": "qor-userland/Utils/stat",
+        "bin-path": "qor-userland/Utils/stat/bin/stat",
+        "output-path": "/bin/stat"
+    },
+    {
         "name": "pwd",
         "make-path": "qor-userland/Utils/pwd",
         "bin-path": "qor-userland/Utils/pwd/bin/pwd",
