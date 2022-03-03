@@ -36,12 +36,11 @@ int main(int argc, char** argv)
     // Call the rm syscall on all of the files passed
     for (int i = 0; files[i]; i++)
     {
-        printf("Removing `%s`\n", files[i]);
         int result = sys_unlink(files[i]);
 
         if (result < 0)
         {
-            printf("Error: %s\n", strerror(-result));
+            printf("Cannot remove %s: %s\n", files[i], strerror(-result));
             exit(1);
         }
     }
