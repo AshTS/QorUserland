@@ -77,156 +77,218 @@ int try_all_paths(int argc, const char** argv, const char** envp)
 }
 
 
-int execute_from_args(int argc, const char** argv, const char** envp, int* return_value, bool as_daemon, int to_close)
+int execute_from_args(int argc, const char **argv, const char **envp, bool as_daemon, int pipe_in, int to_close, struct return_handle* returns, int return_index)
 {
+    static int fds_to_close[32];
+
+    int walking_index = 0;
+
+    int output_redirect = -1;
+    int input_redirect = -1;
+
+    int to_close_internal = -1;
+
+    int procs = 1;
+
+    pid_t pgid = tcgetpgrp(STDIN_FILENO);
+
+    // Repeatedly check for redirections or pipes
+    while (walking_index < argc)
+    {
+        if (strcmp(argv[walking_index], ">") == 0)
+        {
+            // Make sure that there exists a file
+            if (walking_index + 1 >= argc)
+            {
+                eprintf("No file given for redirection\n");
+                exit(-1);
+            }
+
+            const char *filename = argv[walking_index + 1];
+
+            // Try to open the file
+            int file_descriptor = sys_open(filename, O_CREAT | O_RDWR);
+
+            if (file_descriptor < 0)
+            {
+                eprintf("Unable to open or create file `%s`: %s\n", filename, strerror(-file_descriptor));
+                exit(-1);
+            }
+
+            if (output_redirect != -1)
+            {
+                int result = sys_close(output_redirect);
+
+                if (result < 0)
+                {
+                    eprintf("Unable to close: %i: %s\n", output_redirect, strerror(-result));
+                    exit(-1);
+                }
+            }
+            output_redirect = file_descriptor;
+
+            // Modify the argv
+            for (int i = walking_index + 2; i < argc; i++)
+            {
+                argv[i - 2] = argv[i];
+            }
+
+            argv[walking_index] = 0;
+
+            argc -= 2;
+        }
+        else if (strcmp(argv[walking_index], "<") == 0)
+        {
+            // Make sure that there exists a file
+            if (walking_index + 1 >= argc)
+            {
+                eprintf("No file given for input redirection\n");
+                exit(-1);
+            }
+
+            const char *filename = argv[walking_index + 1];
+
+            // Try to open the file
+            int file_descriptor = sys_open(filename, O_RDONLY);
+
+            if (file_descriptor < 0)
+            {
+                eprintf("Unable to open or file `%s`: %s\n", filename, strerror(-file_descriptor));
+                exit(-1);
+            }
+
+            if (input_redirect != -1)
+            {
+                int result = sys_close(input_redirect);
+
+                if (result < 0)
+                {
+                    eprintf("Unable to close: %i: %s\n", input_redirect, strerror(-result));
+                    exit(-1);
+                }
+            }
+            input_redirect = file_descriptor;
+
+            // Modify the argv
+            for (int i = walking_index + 2; i < argc; i++)
+            {
+                argv[i - 2] = argv[i];
+            }
+
+            argv[walking_index] = 0;
+
+            argc -= 2;
+        }
+        else if (strcmp(argv[walking_index], "|") == 0)
+        {
+            // First, delete the pipe symbol
+            argv[walking_index] = 0;
+
+            // Next, create the pipe
+            int fds[2];
+            int result = sys_pipe(fds);
+
+            if (result < 0)
+            {
+                eprintf("Unable to create pipe: %s\n", strerror(result));
+                exit(-1);
+            }
+
+            // Run the second half of the pipe
+            fds_to_close[to_close] = fds[1];
+            procs += execute_from_args(argc - walking_index - 1, argv + walking_index + 1, envp, as_daemon, fds[0], to_close + 1, returns, return_index + 1);
+
+            to_close_internal = fds[0];
+
+            if (output_redirect != -1)
+            {
+                int result = sys_close(output_redirect);
+
+                if (result < 0)
+                {
+                    eprintf("Unable to close: %i: %s\n", output_redirect, strerror(-result));
+                    exit(-1);
+                }
+            }
+            output_redirect = fds[1];
+
+            // Step back the size of argv
+            argc = walking_index;
+
+            break;
+        }
+        else
+        {
+            walking_index++;
+        }
+    }
+
     pid_t pid = sys_fork();
-    
+
     if (pid == 0)
     {
-        if (to_close >= 0)
+        for (int i = 0; i < to_close; i++)
         {
-            sys_close(to_close);
+            int fd = fds_to_close[i];
+
+            int result = sys_close(fd);
+
+            if (result < 0)
+            {
+                eprintf("Unable to close: %i: %s\n", fd, strerror(-result));
+                exit(-1);
+            }
         }
 
-        int walking_index = 0;
-        // Repeatedly check for redirections or pipes
-        while (walking_index < argc)
+        if (input_redirect != -1)
         {
-            if (strcmp(argv[walking_index], ">") == 0)
+            int result = sys_dup2(input_redirect, 0);
+
+            if (result < 0)
             {
-                // Make sure that there exists a file
-                if (walking_index + 1 >= argc)
-                {
-                    eprintf("No file given for redirection\n");
-                    exit(-1);
-                }
-
-                const char* filename = argv[walking_index + 1];
-
-                // Try to open the file
-                int file_descriptor = sys_open(filename, O_CREAT | O_RDWR);
-
-                if (file_descriptor < 0)
-                {
-                    eprintf("Unable to open or create file `%s`: %s\n", filename, strerror(-file_descriptor));
-                    exit(-1);
-                }
-
-                // Apply the redirection
-                int result = sys_dup2(file_descriptor, 1);
-
-                if (result < 0)
-                {
-                    eprintf("Unable to apply redirection: %s: %sn", filename, strerror(-result));
-                    exit(-1);
-                }
-
-                // Modify the argv
-                for (int i = walking_index + 2; i < argc; i++)
-                {
-                    argv[i - 2] = argv[i];
-                }
-
-                argv[walking_index] = 0;
-
-                argc -= 2;
+                eprintf("Unable to apply input redirection: %i: %s\n", input_redirect, strerror(-result));
+                exit(-1);
             }
-            else if (strcmp(argv[walking_index], "<") == 0)
+        }
+
+        if (pipe_in != -1)
+        {
+            int result = sys_dup2(pipe_in, 0);
+
+            if (result < 0)
             {
-                // Make sure that there exists a file
-                if (walking_index + 1 >= argc)
-                {
-                    eprintf("No file given for input redirection\n");
-                    exit(-1);
-                }
-
-                const char* filename = argv[walking_index + 1];
-
-                // Try to open the file
-                int file_descriptor = sys_open(filename, O_RDONLY);
-
-                if (file_descriptor < 0)
-                {
-                    eprintf("Unable to open or file `%s`: %s\n", filename, strerror(-file_descriptor));
-                    exit(-1);
-                }
-
-                // Apply the redirection
-                int result = sys_dup2(file_descriptor, 0);
-
-                if (result < 0)
-                {
-                    eprintf("Unable to apply input redirection: %s: %s\n", filename, strerror(-result));
-                    exit(-1);
-                }
-
-                // Modify the argv
-                for (int i = walking_index + 2; i < argc; i++)
-                {
-                    argv[i - 2] = argv[i];
-                }
-
-                argv[walking_index] = 0;
-
-                argc -= 2;
+                eprintf("Unable to apply pipe input redirection: %i: %s\n", pipe_in, strerror(-result));
+                exit(-1);
             }
-            else if (strcmp(argv[walking_index], "|") == 0)
+        }
+
+        if (output_redirect != -1)
+        {
+            int result = sys_dup2(output_redirect, 1);
+
+            if (result < 0)
             {
-                // First, delete the pipe symbol
-                argv[walking_index] = 0;
-
-                // Next, create the pipe
-                int fds[2];
-                int result = sys_pipe(fds);
-
-                if (result < 0)
-                {
-                    eprintf("Unable to create pipe: %s\n", strerror(result));
-                    exit(-1);
-                }
-
-                // Next, backup the previous read descriptor
-                int backup_read = sys_dup(0);
-
-                if (backup_read < 0)
-                {
-                    eprintf("Unable to backup the read descriptor: %s\n", strerror(backup_read));
-                    exit(-1);
-                }
-
-                // Redirect the read end of the pipe as the input to the second half of the pipe
-                result = sys_dup2(fds[0], 0);
-
-                // Run the second half of the pipe
-                execute_from_args(argc - walking_index - 1, argv + walking_index + 1, envp, return_value, as_daemon, fds[1]);
-
-                // Replace the read end of the pipe
-                result = sys_dup2(backup_read, 0);
-
-                // Close the read end
-                sys_close(fds[0]);
-
-                // Replace the write end of the pipe
-                result = sys_dup2(fds[1], 1);
-
-                // Step back the size of argv
-                argc = walking_index;
-
-                break;
+                eprintf("Unable to apply output redirection: %i: %s\n", output_redirect, strerror(-result));
+                exit(-1);
             }
-            else
+        }
+
+        if (to_close_internal != -1)
+        {
+            int result = sys_close(to_close_internal);
+
+            if (result < 0)
             {
-                walking_index++;
+                eprintf("Unable to close: %i: %s\n", to_close_internal, strerror(-result));
+                exit(-1);
             }
         }
 
         // Set the current process as the terminal's foreground group
         if (!as_daemon)
-        {   
+        {
             pid_t child_pid = sys_getpid();
-            sys_setpgid(child_pid, child_pid);
-
-            tcsetpgrp(STDIN_FILENO, child_pid);
+            sys_setpgid(child_pid, pgid);
         }
 
         // Execute the program
@@ -236,8 +298,27 @@ int execute_from_args(int argc, const char** argv, const char** envp, int* retur
         eprintf("Unable to load executable `%s`\n", argv[0]);
         exit(-1);
     }
+    else
+    {
+        if (output_redirect != -1)
+        {
+            sys_close(output_redirect);
+        }
 
-    return pid;
+        if (input_redirect != -1)
+        {
+            sys_close(input_redirect);
+        }
+
+        if (to_close_internal != -1)
+        {
+            sys_close(to_close_internal);
+        }
+
+        returns[return_index].pid = pid;
+    }
+
+    return procs;
 }
 
 // Update the path stored interally

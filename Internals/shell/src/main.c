@@ -5,17 +5,29 @@
 #include <libc/string.h>
 #include <libc/stdio.h>
 #include <libc/sys/syscalls.h>
+#include <libc/termios.h>
+#include <libc/unistd.h>
 
 #include "exec.h"
 
 int RETURN_CODE = 0;
 bool SHOW_TAG = true;
 
+int PIPE_COUNT = 1;
+struct return_handle* RETURNS;
+
 void display_tag();
 bool read_input(int fd, char* buffer, int length);
 
 int main(int argc, char** argv, const char** envp)
 {
+    RETURNS = malloc(sizeof(struct return_handle) * 32);
+    RETURNS[0].return_code = 0;
+
+    pid_t pgid = sys_getpid();
+    
+    tcsetpgrp(STDIN_FILENO, pgid);
+
     FILE* input_stream = stdin;
 
     if (argc > 1)
@@ -84,13 +96,30 @@ int main(int argc, char** argv, const char** envp)
                 // Otherwise, attempt to execute it as an executable program
                 else
                 {
-                    pid_t pid = execute_from_args(count, (const char**)arguments, envp, &RETURN_CODE, run_as_daemon, -1);
+                    PIPE_COUNT = execute_from_args(count, (const char**)arguments, envp, run_as_daemon, -1, 0, RETURNS, 0);
 
                     // Wait for the process to finish before looping back   
                     if (!run_as_daemon)
                     {
                         errno = 0;
-                        while (sys_wait(&RETURN_CODE) != pid);
+
+                        int remaining = PIPE_COUNT;
+                        int code;
+
+                        while (remaining)
+                        {
+                            pid_t this_pid = sys_wait(&code);
+
+                            for (int i = 0; i < PIPE_COUNT; i++)
+                            {
+                                if (RETURNS[i].pid == this_pid)
+                                {
+                                    RETURNS[i].return_code = code;
+                                    remaining--;
+                                    break;
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -106,33 +135,55 @@ int main(int argc, char** argv, const char** envp)
 
 void display_tag()
 {
-    char buffer[64];
+    char buffer[128];
 
     int pos = sys_getcwd(buffer, 63);
     buffer[pos] = 0;
 
-    if (RETURN_CODE == 0)
+    printf("|%s$", buffer);
+
+    bool show_return = false;
+
+    for (int i = 0; i < PIPE_COUNT; i++)
     {
-        printf("|%s$> ", buffer);    
+        if (RETURNS[i].return_code)
+        {
+            show_return = true;
+            break;
+        }
     }
-    else if (RETURN_CODE == 130)
+
+    if (show_return)
     {
-        printf("|%s$ [SIGINT]> ", buffer);
-        RETURN_CODE = 0;
+        printf(" [");
+        for (int i = 0; i < PIPE_COUNT; i++)
+        {
+            int return_code = RETURNS[i].return_code;
+
+            if (return_code == 130)
+            {
+                printf("SIGINT");
+            }
+            else if (return_code == 137)
+            {
+                printf("SIGKILL");
+            }
+            else if (return_code == 143)
+            {
+                printf("SIGTERM");
+            }
+            else
+            {
+                printf("%i", return_code);
+            }
+
+            if (i + 1 < PIPE_COUNT)
+            {
+                printf("|");
+            }
+        } 
+        printf("]");
     }
-    else if (RETURN_CODE == 137)
-    {
-        printf("|%s$ [SIGKILL]> ", buffer);
-        RETURN_CODE = 0;
-    }
-    else if (RETURN_CODE == 143)
-    {
-        printf("|%s$ [SIGTERM]> ", buffer);
-        RETURN_CODE = 0;
-    }
-    else
-    {
-        printf("|%s$ [%i]> ", buffer, RETURN_CODE);
-        RETURN_CODE = 0;
-    }
+
+    printf("> ");
 }
