@@ -167,6 +167,12 @@
         "output-path": "/bin/shutdown"
     },
     {
+        "name": "hexdump",
+        "make-path": "qor-userland/Utils/hexdump",
+        "bin-path": "qor-userland/Utils/hexdump/bin/hexdump",
+        "output-path": "/bin/hexdump"
+    },
+    {
         "name": "sort",
         "make-path": "qor-userland/Utils/sort",
         "bin-path": "qor-userland/Utils/sort/bin/sort",
