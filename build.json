@@ -173,6 +173,12 @@
         "output-path": "/bin/hexdump"
     },
     {
+        "name": "ps",
+        "make-path": "qor-userland/Utils/ps",
+        "bin-path": "qor-userland/Utils/ps/bin/ps",
+        "output-path": "/bin/ps"
+    },
+    {
         "name": "sort",
         "make-path": "qor-userland/Utils/sort",
         "bin-path": "qor-userland/Utils/sort/bin/sort",
