@@ -35,6 +35,13 @@
         "postbuild": ["cp qor-userland/Libraries/libimg/bin/libimg.a qor-userland/lib/libimg.a"]
     },
     {
+        "name": "LibElf",
+        "make-path": "qor-userland/Libraries/libelf",
+        "bin-path": "qor-userland/Libraries/libelf/bin/libelf.a",
+        "output-path": "/lib/libelf.a",
+        "postbuild": ["cp qor-userland/Libraries/libelf/bin/libelf.a qor-userland/lib/libelf.a"]
+    },
+    {
         "name": "init",
         "make-path": "qor-userland/Internals/init",
         "bin-path": "qor-userland/Internals/init/bin/init",
