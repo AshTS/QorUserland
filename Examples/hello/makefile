@@ -1,9 +1,9 @@
 CC = clang
-CFLAGS = --target=riscv64 -march=rv64gc -mno-relax
+CFLAGS = --target=riscv64 -march=rv64gc -mno-relax -O3
 INCLUDE_DIR = ${qorIncludePath}
 
 LINK = ld.lld
-LINKFLAGS =
+LINKFLAGS = --gc-sections
 
 INCLUDES = libc/stdio.h
 

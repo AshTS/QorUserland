@@ -3,7 +3,7 @@ CFLAGS = --target=riscv64 -march=rv64gc -mno-relax
 INCLUDE_DIR = ${qorIncludePath}
 
 LINK = ld.lld
-LINKFLAGS =
+LINKFLAGS = --gc-sections
 
 INCLUDES = libc/assert.h libc/errno.h libc/stdio.h libc/string.h argparse.h
 
