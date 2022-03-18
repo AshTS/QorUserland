@@ -742,6 +742,18 @@ int riscv_render_inst_symbols(char* s, struct riscv_inst_repr* inst, uint64_t ad
             render_addr(buf, addr + (int64_t)(int32_t)inst->imm);
             sprintf(s, "%s %s, %i %s", riscv_inst_to_str(inst->inst), riscv_register_name(inst->r_dest), inst->imm, buf);
             break;
+
+        case SPECIAL:
+            if (inst->inst == ECALL)
+            {
+                sprintf(s, "ecall");
+                break;
+            }
+            else if (inst->inst == EBREAK)
+            {
+                sprintf(s, "ebreak");
+                break;
+            }
         
         default:
             sprintf(s, "%s imm: %x, rd: %i, rs1: %i, rs2: %i", riscv_inst_to_str(inst->inst), inst->imm, inst->r_dest, inst->r_src1, inst->r_src2);
