@@ -42,6 +42,13 @@
         "postbuild": ["cp qor-userland/Libraries/libelf/bin/libelf.a qor-userland/lib/libelf.a"]
     },
     {
+        "name": "LibRiscV",
+        "make-path": "qor-userland/Libraries/libriscv",
+        "bin-path": "qor-userland/Libraries/libriscv/bin/libriscv.a",
+        "output-path": "/lib/libriscv.a",
+        "postbuild": ["cp qor-userland/Libraries/libriscv/bin/libriscv.a qor-userland/lib/libriscv.a"]
+    },
+    {
         "name": "init",
         "make-path": "qor-userland/Internals/init",
         "bin-path": "qor-userland/Internals/init/bin/init",
