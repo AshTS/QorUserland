@@ -199,6 +199,12 @@
         "output-path": "/bin/sort"
     },
     {
+        "name": "objdump",
+        "make-path": "qor-userland/Utils/objdump",
+        "bin-path": "qor-userland/Utils/objdump/bin/objdump",
+        "output-path": "/bin/objdump"
+    },
+    {
         "name": "spin",
         "make-path": "qor-userland/Games/spin",
         "bin-path": "qor-userland/Games/spin/bin/spin",
