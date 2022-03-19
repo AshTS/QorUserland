@@ -69,7 +69,7 @@ void hex_dump(void* buf, size_t length)
 
     while (line < length)
     {
-        printf("%0*x ", line_num_length, line);
+        printf("%0*lx ", line_num_length, line);
 
         for (size_t i = 0; i < 16; i++)
         {
@@ -130,6 +130,8 @@ void hex_dump(void* buf, size_t length)
 int render_addr(char* buf, uint64_t addr)
 {
     elf_get_symbol(symbol_header, buf, addr, symbol_section);
+
+    return 0;
 }
 
 void dump_section(Elf64_Ehdr* header, Elf64_Shdr* section)
@@ -169,7 +171,7 @@ void dump_section(Elf64_Ehdr* header, Elf64_Shdr* section)
                 printf("\n%016lx <%s>:\n", addr, name);
             }
 
-            printf("    %07x  %s\n", addr, s);
+            printf("    %07lx  %s\n", addr, s);
         
             if (inst.width == 4)
             {
@@ -177,7 +179,7 @@ void dump_section(Elf64_Ehdr* header, Elf64_Shdr* section)
             }
             else
             {
-                inst_ptr = ((uint64_t)inst_ptr + 2);
+                inst_ptr = (uint32_t*)((uint64_t)inst_ptr + 2);
             }
         }
     }

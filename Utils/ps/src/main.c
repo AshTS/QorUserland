@@ -145,7 +145,7 @@ struct process_data get_pid(int pid)
 void display_proc(struct process_data proc)
 {
     //        PID      Mem  Name
-    printf("%5i  %5i  %s\n", proc.pid, proc.data_mem + proc.resident_mem + proc.text_mem, proc.name);
+    printf("%5i  %5lu  %s\n", proc.pid, proc.data_mem + proc.resident_mem + proc.text_mem, proc.name);
 }
 
 int parse_integer(char* s, int* value)

@@ -1,5 +1,9 @@
 #include <libc/assert.h>
+#include <libc/fcntl.h>
 #include <libc/stdio.h>
+#include <libc/stdlib.h>
+#include <libc/string.h>
+#include <libc/unistd.h>
 
 #include "argparse.h"
 
@@ -30,7 +34,7 @@ int main(int argc, char** argv)
     output_settings.show_data = false;
     output_settings.show_symbols = false;
 
-    const char** filename = arg_get_free(&args);
+    const char** filename = (const char**)arg_get_free(&args);
 
     if (*filename == NULL)
     {
@@ -74,7 +78,7 @@ void dump_file(const char* name)
     }
 
     // Attempt to memory map the file
-    size_t ptr = sys_mmap(0, length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    size_t ptr = (size_t)sys_mmap(0, length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
     if (ptr < 0)
     {

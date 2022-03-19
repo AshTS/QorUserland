@@ -690,10 +690,12 @@ char* riscv_register_name(int i)
             return "t5";
         case 31:
             return "t6";
+        default:
+            return "ERR";
     }
 }
 
-int addr_render(char* s, int64_t addr)
+int addr_render(char* s, uint64_t addr)
 {
     sprintf(s, "(%lx)", addr);
     return 0;
@@ -702,7 +704,7 @@ int addr_render(char* s, int64_t addr)
 // Convert a RISC-V instruction represented as a struct riscv_inst_repr into a string (give atleast 64) bytes of space for the string
 int riscv_render_inst(char* s, struct riscv_inst_repr* inst, uint64_t addr)
 {
-    riscv_render_inst_symbols(s, inst, addr, addr_render);
+    return riscv_render_inst_symbols(s, inst, addr, addr_render);
 }
 
 int riscv_render_inst_symbols(char* s, struct riscv_inst_repr* inst, uint64_t addr, int (*render_addr)(char*, uint64_t))

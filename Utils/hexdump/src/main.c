@@ -66,7 +66,7 @@ void hex_dump(void* buf, size_t length)
 
     while (line < length)
     {
-        printf("%0*x ", line_num_length, line);
+        printf("%0*lx ", line_num_length, line);
 
         for (size_t i = 0; i < 16; i++)
         {
@@ -148,7 +148,7 @@ void output_file(char* name)
     }
 
     // Attempt to memory map the file
-    size_t ptr = sys_mmap(0, length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    size_t ptr = (size_t)sys_mmap(0, length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
     if (ptr < 0)
     {
