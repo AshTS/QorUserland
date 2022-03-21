@@ -48,8 +48,6 @@ int main(int argc, char** argv)
 
 void assemble_filename(const char* name)
 {
-    LOG("Assembling file %s\n", name);
-
     // Open the file handle
     FILE* file;
     errno = 0;
@@ -71,7 +69,7 @@ void assemble_filename(const char* name)
     strcat(dup_name, ".o");
 
     // Execute the assembler
-    assemble_file_handle(file, (const char*)output_name);
+    assemble_file_handle(file, name, (const char*)output_name);
 
     // Free the duplicated name
     free(dup_name);

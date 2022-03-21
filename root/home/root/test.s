@@ -1,4 +1,4 @@
-.section .section
+.section .rodata
 hello:
     .asciz "Hello World"
 
@@ -6,12 +6,9 @@ hello:
 
 .section .text
 .globl main
-main    :
+main:
     addi sp, sp, -8
     sd ra, 0(sp)
-
-    la a0, hello
-    call puts
 
     la a0, hello
     call puts

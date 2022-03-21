@@ -1,7 +1,7 @@
 #ifndef AS_H
 #define AS_H
 
-// #define DEBUG
+#define DEBUG
 
 #include <libc/stdbool.h>
 
