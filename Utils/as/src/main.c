@@ -1,161 +1,93 @@
 #include <libc/assert.h>
 #include <libc/errno.h>
+#include <libc/stdbool.h>
 #include <libc/stdio.h>
-#include <libc/stdlib.h>
 #include <libc/string.h>
+#include <libc/stdlib.h>
 
 #include "argparse.h"
 
-#include "generic.h"
-#include "parser.h"
-#include "codegen.h"
-#include "riscv.h"
-#include "elf.h"
+#include "as.h"
+#include "assemble.h"
 
-#define DEBUG
-
-#ifdef DEBUG
-bool SHOW_DEBUG = true;
-#else
-bool SHOW_DEBUG = false;
-#endif
+bool verbose_flag = false;
 
 void show_usage(char*);
-int assemble_file(char*);
-
-struct GenerationSettings* generate(Token* tokens, size_t count, size_t* section_count);
+void assemble_filename(const char* name);
 
 int main(int argc, char** argv)
 {
-    #ifdef DEBUG
-    printf("Debug Build\n");
-    #endif
-
     // Parse command line arguments
     struct Arguments args;
     int arg_parse_result = arg_parse(&args, argc, argv);
     assert(!arg_parse_result);
 
-    // If the help has been requested, show the usage
-    if (arg_check_long(&args, "help") || arg_check_short(&args, 'h'))
+    verbose_flag = arg_check_short(&args, 'v') || arg_check_long(&args, "verbose");
+
+    if (arg_check_short(&args, 'h') || arg_check_long(&args, "help"))
     {
         show_usage(argv[0]);
         return 0;
     }
 
-    SHOW_DEBUG = SHOW_DEBUG || (arg_check_long(&args, "verbose") || arg_check_short(&args, 'V'));
+    char** files = arg_get_free(&args);
 
-    // Get the files to assemble from the command line
-    char** files_to_assemble = arg_get_free(&args);
-
-    if (*files_to_assemble == 0)
+    if (*files == 0)
     {
-        eprintf("No files given to assemble.\n");
-        return 1;
+        printf("as: no input file given\n");
+        exit(1);
+    }
+    else
+    {
+        while (files && *files)
+        {
+            assemble_filename((const char*)*files++);
+        }
+    }
+}
+
+void assemble_filename(const char* name)
+{
+    LOG("Assembling file %s\n", name);
+
+    // Open the file handle
+    FILE* file;
+    errno = 0;
+    file = fopen(name, "r");
+
+    if (file == 0 || errno != 0)
+    {
+        printf("as: unable to open file `%s`: %s\n", name, strerror(errno));
+        exit(1);
     }
 
-    while (*files_to_assemble)
+    // Determine the output name
+    char* dup_name = malloc(strlen(name) + 2);
+    strcpy(dup_name, name);
+    const char* output_name = strchr(dup_name, '/');
+    if (output_name == NULL) { output_name = dup_name; } else { output_name++; }
+    char* period = strchr(dup_name, '.');
+    if (period) { *period = 0; }
+    strcat(dup_name, ".o");
+
+    // Execute the assembler
+    assemble_file_handle(file, (const char*)output_name);
+
+    // Free the duplicated name
+    free(dup_name);
+
+    // Close the file handle
+    if (fclose(file) < 0)
     {
-        int result = assemble_file(*files_to_assemble);
-
-        if (result != 0)
-        {
-            return result;
-        }
-
-        files_to_assemble++;
+        printf("as: unable to close file `%s`: %s\n", name, strerror(errno));
+        exit(1);
     }
 }
 
 void show_usage(char* prog_name)
 {
-    printf("Usage: %s [OPTIONS] ... [FILE] ...\n", prog_name);
-    printf(" Assemble a RISC-V assembly file into an executable\n\n");
+    printf("Usage: %s [OPTIONS] ... [FILES] ...\n", prog_name);
+    printf(" Assemble the FILES given into object files\n\n");
     printf("       -h --help          Show the usage\n");
-    printf("       -V --verbose       Enable debugging output");
-}
-
-int assemble_file(char* filename)
-{
-    DEBUG_PRINTF("Assemble file `%s`\n", filename);
-
-    errno = 0;
-    FILE* file = fopen(filename, "r");
-
-    if (file == 0 || errno > 0)
-    {
-        eprintf("Error: Unable to open file `%s`: %s\n", filename, strerror(errno));
-        return 1;
-    }
-
-    char buffer[4096];
-    int bytes_read = fread(buffer, 1, 4095, file);
-    if (errno > 0)
-    {
-        eprintf("Error: Unable to read file: %s\n", strerror(errno));
-        return 1;
-    }
-
-    buffer[bytes_read] = 0;
-
-    fclose(file);
-    if (errno > 0)
-    {
-        eprintf("Error: Unable to close file: %s\n", strerror(errno));
-        return 1;
-    }
-
-    size_t count;
-    Token* tokens = tokenize_buffer(buffer, filename, &count);
-
-    size_t section_count;
-
-    if (tokens == NULL)
-    {
-        return 1;
-    }
-
-    struct GenerationSettings* result = generate(tokens, count, &section_count);
-
-    bool fail = false;
-
-    if (link(result))
-    {
-        if (!write_to_elf(result, "a.out"))
-        {
-            fail = true;
-        }
-    }
-    else
-    {
-        fail = true;
-    }
-
-    free(tokens);
-    
-    settings_alloc_free(result);
-
-    return fail;
-}
-
-struct GenerationSettings* generate(Token* tokens, size_t count, size_t* section_count)
-{
-    for (size_t i = 0; i < count; i++)
-    {
-        printf("%s\n", render_token(&tokens[i]));
-    }
-
-    struct Instruction inst; 
-    struct ParsingError error;
-
-    struct GenerationSettings* settings = settings_alloc_new();
-
-    while (tokens->type != EOFTOK)
-    {
-        if (!parse_code(&tokens, settings, &error))
-        {
-            printf("Error:   %s at %s\n", error.error_text, render_location(&error.loc));
-        }
-    }
-    return settings;
+    printf("       -v --verbose       Show a verbose output\n");
 }
