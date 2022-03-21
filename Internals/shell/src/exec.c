@@ -63,12 +63,7 @@ int try_all_paths(int argc, const char** argv, const char** envp)
         strcat(buffer, "/");
         strcat(buffer, argv[0]);
 
-        const char* argv_0_backup = argv[0];
-        argv[0] = buffer;
-
-        sys_execve(argv[0], argv, envp);
-
-        argv[0] = argv_0_backup;
+        sys_execve(buffer, argv, envp);
 
         free(buffer);
     }
