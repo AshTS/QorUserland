@@ -84,6 +84,10 @@ int main(int argc, const char** argv, const char** envp)
         free(buffer);
     }
 
+    SYSTEM_LOG("Syncing Filesystem\n");
+
+    sys_sync();
+
     SYSTEM_LOG("Shutting Down\n");
 
     closedir(directory);
