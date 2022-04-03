@@ -17,3 +17,5 @@ main:
     addi sp, sp, 8
 
     ret
+end:
+    

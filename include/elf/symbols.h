@@ -1,7 +1,7 @@
 #ifndef _RISCV_SYMBOLS_H
 #define _RISCV_SYMBOLS_H
 
-#include "libelf.h"
+#include "elf.h"
 
 // Elf 64 symbol table bindings
 #define STB_LOCAL 0

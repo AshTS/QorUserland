@@ -3,6 +3,7 @@
 
 #include "elf.h"
 #include "symbols.h"
+#include "relocations.h"
 
 // Error codes
 #define LIB_ELF_BADMAGIC 1

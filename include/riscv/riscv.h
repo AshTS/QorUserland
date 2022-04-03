@@ -111,4 +111,7 @@ int riscv_render_inst(char* s, struct riscv_inst_repr* result, uint64_t addr);
 // in this version of the function, there is a function pointer passed that every address reference is passed to, this allows desymbolication or pretty printing of addresses
 int riscv_render_inst_symbols(char* s, struct riscv_inst_repr* result, uint64_t addr, int (*render_addr)(char*, uint64_t));
 
+// Assemble a riscv_inst_repr into a 32 bit integer
+uint32_t riscv_assemble(struct riscv_inst_repr inst);
+
 #endif // _RISCV_RISCV_H

@@ -31,8 +31,8 @@ int main(int argc, char** argv)
 
     // Interpret the command line flags
     output_settings.disassemble = true;
-    output_settings.show_data = false;
-    output_settings.show_symbols = false;
+    output_settings.show_data = true;
+    output_settings.show_symbols = true;
 
     const char** filename = (const char**)arg_get_free(&args);
 
