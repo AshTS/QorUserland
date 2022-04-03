@@ -13,10 +13,10 @@ OUTPUT_DIR = bin
 BUILD_DIR = bin
 SRC_DIR = src
 
-_LIBS = libc.a libarg.a libriscv.a
+_LIBS = libc.a libarg.a libriscv.a libelf.a
 LIBS = $(patsubst %,$(LIB_DIR)/%,$(_LIBS))
 
-_OBJ = main.o assemble.o tokenizer.o vector.o inst_assemble.o
+_OBJ = main.o vector.o database.o
 OBJ = $(patsubst %,$(BUILD_DIR)/%,$(_OBJ))
 
 RAW_INCLUDES = $(patsubst %, $(INCLUDE_DIR)/%, $(INCLUDES))
