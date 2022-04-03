@@ -151,6 +151,12 @@
         "output-path": "/bin/as"
     },
     {
+        "name": "Linker",
+        "make-path": "qor-userland/Utils/ld",
+        "bin-path": "qor-userland/Utils/ld/bin/ld",
+        "output-path": "/bin/ld"
+    },
+    {
         "name": "femto",
         "make-path": "qor-userland/Utils/femto",
         "bin-path": "qor-userland/Utils/femto/bin/femto",
