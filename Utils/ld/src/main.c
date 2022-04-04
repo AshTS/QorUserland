@@ -46,11 +46,13 @@ int main(int argc, char** argv)
         {
             if (include_file(*files++))
             {
-                break;
+                exit(1);
             }
         }
 
         dump_symbol_database();
+        printf("\n");
+        dump_section_database();
     }
 }
 

@@ -6,8 +6,24 @@
 #include "as.h"
 
 struct vector symbol_database = VECTOR(struct symbol_database_entry);
+struct vector section_database = VECTOR(struct section_database_entry);
+
+int register_elf_symbols(uint8_t* buffer, const char* filename);
+int register_elf_sections(uint8_t* buffer, const char* filename);
 
 int register_elf_buffer(uint8_t* buffer, const char* filename)
+{
+    int r = register_elf_sections(buffer, filename);
+    if (r) return r;
+
+    r = register_elf_symbols(buffer, filename);
+    if (r) return r;
+
+    r = register_elf_relocations(buffer, filename);
+    if (r) return r;
+}
+
+int register_elf_symbols(uint8_t* buffer, const char* filename)
 {
     LOG("Registering symbols from elf file in buffer for file %s\n", filename);
 
@@ -74,6 +90,55 @@ int register_elf_buffer(uint8_t* buffer, const char* filename)
                 }
             }
         }
+    }
+
+    return 0;
+}
+
+
+int register_elf_sections(uint8_t* buffer, const char* filename)
+{
+    LOG("Registering sections from elf file in buffer for file %s\n", filename);
+
+    Elf64_Ehdr* header = buffer;
+
+    // Verify the ELF header
+    int elf_verify_result = elf_verify(header);
+    if (elf_verify_result)
+    {
+        printf("ld: %s is not an ELF file: %s\n", filename, elf_strerror(elf_verify_result));
+        return 1;
+    }
+
+    // Iterate over all of the sections
+    for (int i = 1; i < header->e_shnum; i++)
+    {
+        Elf64_Shdr* section_header = elf_get_sh(header, i);
+
+        if (section_header == NULL)
+        {
+            printf("ld: %s is malformed: not enough space for section headers\n", filename);
+            return 1;
+        }
+
+        // Ignore any non SHT_PROGBITS sections
+        if (section_header->sh_type != SHT_PROGBITS)
+        {
+            continue;
+        }
+
+        char* name = elf_get_section_name(header, section_header->sh_name);
+
+        struct section_database_entry entry = (struct section_database_entry){
+            .file = filename,
+            .name = name,
+            .ptr = NULL,
+            .relocation_database = VECTOR(struct relocation_database_entry),
+            .section = *section_header,
+            .index_in_elf = i,
+        };
+
+        vector_append_ptr(&section_database, &entry);
     }
 
     return 0;
