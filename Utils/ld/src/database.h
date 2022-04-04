@@ -43,5 +43,6 @@ struct symbol_database_entry* find_symbol(const char* symbol_name);
 
 void dump_symbol_database();
 void dump_section_database();
+void dump_relocation_database();
 
 #endif // DATABASE_H

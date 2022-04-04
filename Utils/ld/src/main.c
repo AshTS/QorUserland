@@ -50,9 +50,11 @@ int main(int argc, char** argv)
             }
         }
 
+        dump_section_database();
+        printf("\n");
         dump_symbol_database();
         printf("\n");
-        dump_section_database();
+        dump_relocation_database();
     }
 }
 
