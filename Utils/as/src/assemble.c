@@ -9,7 +9,7 @@
 
 struct section_data create_section_data(char* name)
 {
-    return (struct section_data){.name = name, .buffer = VECTOR(char), .type = 0, .info=0, .addralign=1, .entsize=0};
+    return (struct section_data){.name = name, .buffer = VECTOR(char), .type = 0, .info=0, .addralign=4, .entsize=0};
 }
 
 struct relocation_group create_relocation_group(char* name, uint32_t link)
@@ -404,7 +404,7 @@ struct vector construct_elf_file(struct vector sections, struct vector symbols)
             vector_append(&section_data_buffer, 0);
         }
 
-        shs[3 + i].sh_addralign = 1;
+        shs[3 + i].sh_addralign = section_array[i].addralign;
         shs[3 + i].sh_offset = off;
         shs[3 + i].sh_size = section_array[i].buffer.length;
         shs[3 + i].sh_type = section_array[i].type;

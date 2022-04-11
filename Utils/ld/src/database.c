@@ -133,7 +133,7 @@ int register_elf_sections(uint8_t* buffer, const char* filename)
         struct section_database_entry entry = (struct section_database_entry){
             .file = filename,
             .name = name,
-            .ptr = NULL,
+            .ptr = buffer + section_header->sh_offset,
             .relocation_database = VECTOR(struct relocation_database_entry),
             .section = *section_header,
             .index_in_elf = i,
@@ -247,6 +247,21 @@ struct symbol_database_entry* find_symbol(const char* symbol_name)
     for (int i = 0; i < symbol_database.length; i++)
     {
         if (strcmp(array[i].name, symbol_name) == 0)
+        {
+            return &array[i];
+        }
+    }
+
+    return NULL;
+}
+
+struct section_database_entry* associated_section(struct symbol_database_entry symbol)
+{
+    struct section_database_entry* array = VEC_TO_ARRAY(section_database, struct section_database_entry);
+
+    for (int i = 0; i < symbol_database.length; i++)
+    {
+        if (strcmp(array[i].name, symbol.section) == 0 && strcmp(array[i].file, symbol.file) == 0)
         {
             return &array[i];
         }

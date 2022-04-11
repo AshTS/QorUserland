@@ -40,6 +40,7 @@ extern struct vector section_database;
 
 int register_elf_buffer(uint8_t* buffer, const char* filename);
 struct symbol_database_entry* find_symbol(const char* symbol_name);
+struct section_database_entry* associated_section(struct symbol_database_entry symbol);
 
 void dump_symbol_database();
 void dump_section_database();

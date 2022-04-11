@@ -10,12 +10,14 @@
 #include "argparse.h"
 
 #include "as.h"
+#include "elf.h"
 #include "database.h"
 #include "vector.h"
 
 uint8_t verbose_flag = false;
 
 void show_usage(char*);
+int output_elf_to_file(const char* filename);
 int include_file(const char* filename);
 
 int main(int argc, char** argv)
@@ -55,6 +57,8 @@ int main(int argc, char** argv)
         dump_symbol_database();
         printf("\n");
         dump_relocation_database();
+
+        output_elf_to_file("out");
     }
 }
 
@@ -109,4 +113,38 @@ int include_file(const char* filename)
     }
 
     return register_elf_buffer(buffer, filename);
+}
+
+
+int output_elf_to_file(const char* filename)
+{
+    // Construct the ELF file
+    struct vector elf_buffer;
+    
+    if (link(&elf_buffer))
+    {
+        return 1;
+    }
+
+    FILE* f = fopen(filename, "wb");
+    if (f == NULL)
+    {
+        printf("ld: Unable to open output file %s: %s\n", filename, strerror(errno));
+        return 1;
+    }
+
+
+    if (fwrite(VEC_TO_ARRAY(elf_buffer, uint8_t), elf_buffer.length, 1, f) != 1)
+    {
+        printf("ld: Unable to write to file %s: %s\n", filename, strerror(errno));
+        return 1;
+    }
+
+    if (fclose(f))
+    {
+        printf("ld: Unable to close file %s: %s\n", filename, strerror(errno));
+        return 1;
+    }
+
+    return 0;
 }
