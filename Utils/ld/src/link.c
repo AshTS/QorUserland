@@ -90,9 +90,6 @@ int append_section(struct section_data* dest_section, struct section_database_en
         symbol.data.st_value += offset;
 
         vector_append_ptr(symbols, &symbol);
-
-        struct symbol_data* a = VEC_TO_ARRAY((*symbols), struct symbol_data);
-        printf("%lx\n", a[symbols->length - 1].expanded_value);
     }
 
     // Next, we want to apply any relocations which have been requested for this section
@@ -108,8 +105,37 @@ int append_section(struct section_data* dest_section, struct section_database_en
 
         if (symbol == NULL)
         {
-            printf("Symbol %s not yet included\n", reloc_array[i].symbol_name);
-            return 1;
+            // If we didn't find the symbol already included, then we must include it by bringing in the section which contains it
+            struct symbol_database_entry* symbol_reference = find_symbol(reloc_array[i].symbol_name);
+            if (reloc_array[i].symbol_name == NULL || !symbol_reference->defined)
+            {
+                printf("ld: Symbol %s not defined\n", reloc_array[i].symbol_name);
+                return 1;
+            }
+
+            // Get the section associated with the symbol
+            struct section_database_entry* symbol_section = associated_section(*symbol_reference);
+            if (symbol_section == NULL)
+            {
+                printf("ld: No section associated with symbol %s\n", reloc_array[i].symbol_name);
+                return 1;
+            }
+
+            // Now, append that section to the current one
+            int result = append_section(dest_section, symbol_section, symbols, section_index);
+            if (result)
+            {
+                return result;
+            }
+
+            // Try to get the symbol again
+            symbol = find_exec_symbol(symbols, reloc_array[i].symbol_name);
+
+            if (symbol == NULL)
+            {
+                printf("ld: Successfully imported section for symbol %s, but no such symbol was defined\n", reloc_array[i].symbol_name);
+                return 1;
+            }
         }
         else
         {
@@ -130,9 +156,14 @@ int append_section(struct section_data* dest_section, struct section_database_en
 
 struct symbol_data* find_exec_symbol(struct vector* symbols, const char* symbol_name)
 {
+    if (symbols == NULL || symbols->ptr == NULL)
+    {
+        return NULL;
+    }
+
     struct symbol_data* array = VEC_TO_ARRAY((*symbols), struct symbol_data);
 
-    for (int i = 0; i < symbol_database.length; i++)
+    for (int i = 0; i < symbols->length; i++)
     {
         if (strcmp(array[i].name, symbol_name) == 0)
         {

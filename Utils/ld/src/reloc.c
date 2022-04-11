@@ -22,15 +22,16 @@ int apply_relocation(void* data, struct symbol_data* symbol, struct relocation_d
     uint64_t P = current_section_addr + relocation.relocation.r_offset;
     uint64_t A = relocation.relocation.r_addend;
 
+    /*
     printf("S: %lx\n", S);
     printf("P: %lx\n", P);
     printf("A: %lx\n", A);
+    printf("Value: %li\n", value);
+    */
 
     if (reloc_type == 18)
     {
         int64_t value = S + A - P;
-
-        printf("Value: %li\n", value);
 
         if (value < 0 && (value & ~0x7ff) == 0xfffffffffffff800)
         {
