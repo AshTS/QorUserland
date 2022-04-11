@@ -2,8 +2,12 @@
 
 #include "database.h"
 
+#include <libc/assert.h>
+
 int apply_relocation(void* data, struct symbol_data* symbol, struct relocation_database_entry relocation, uint64_t current_section_addr)
 {
+    uint32_t* instructions = data + relocation.relocation.r_offset;
+
     if (symbol == NULL)
     {
         printf("ld: Symbol %s not defined\n", relocation.symbol_name);
@@ -14,9 +18,34 @@ int apply_relocation(void* data, struct symbol_data* symbol, struct relocation_d
 
     printf("Applying relocation %i with symbol %s\n", reloc_type, relocation.symbol_name);
 
-    if (false)
-    {
+    uint64_t S = symbol->expanded_value;
+    uint64_t P = current_section_addr + relocation.relocation.r_offset;
+    uint64_t A = relocation.relocation.r_addend;
 
+    printf("S: %lx\n", S);
+    printf("P: %lx\n", P);
+    printf("A: %lx\n", A);
+
+    if (reloc_type == 18)
+    {
+        int64_t value = S + A - P;
+
+        printf("Value: %li\n", value);
+
+        if (value < 0 && (value & ~0x7ff) == 0xfffffffffffff800)
+        {
+            instructions[1] |= (value & 0xfff) << 20;
+        }
+        else if (value > 0 && value <= 0x7ff)
+        {
+            instructions[1] |= (value & 0xfff) << 20;
+        }
+        else
+        {
+            printf("Not yet implemented\n");
+            assert(0);
+            return 1;
+        }
     }
     else
     {
