@@ -90,7 +90,6 @@ struct vector construct_elf_file(struct vector sections, struct vector symbols, 
     for (int i = 0; i < sections.length; i++)
     {
         char* name = section_array[i].name;
-        printf("%s\n", name);
 
         section_header.sh_name = shstrtab_buffer.length;
 
@@ -171,8 +170,6 @@ struct vector construct_elf_file(struct vector sections, struct vector symbols, 
         {
             continue;
         }
-
-        printf("Section %s Length: %lu\n", section_array[i].name, section_array[i].buffer.length);
 
         Elf64_Phdr prog_header = (Elf64_Phdr){
             .p_align = 0x4,

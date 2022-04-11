@@ -6,6 +6,7 @@ value:
 
 .globl _start
 _start:
-    addi a0, zero, 43
+    call value
+    
     addi a7, zero, 60
     ecall

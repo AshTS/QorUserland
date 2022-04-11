@@ -4,6 +4,8 @@
 #include "vector.h"
 #include "elf/libelf.h"
 
+#include "database.h"
+
 struct section_data
 {
     char* name;
@@ -20,6 +22,7 @@ struct section_data
 struct symbol_data
 {
     char* name;
+    uint64_t expanded_value;
     Elf64_Sym data;
 };
 
@@ -27,5 +30,6 @@ struct section_data create_section_data(char* name);
 
 struct vector construct_elf_file(struct vector sections, struct vector symbols, uint64_t start_symbol_offset, uint64_t vaddr_start);
 int link(struct vector* elf_buffer);
+int apply_relocation(void* data, struct symbol_data* symbol, struct relocation_database_entry relocation, uint64_t current_section_addr);
 
 #endif // ELF_OUTPUT_H

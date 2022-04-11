@@ -16,7 +16,7 @@ SRC_DIR = src
 _LIBS = libc.a libarg.a libriscv.a libelf.a
 LIBS = $(patsubst %,$(LIB_DIR)/%,$(_LIBS))
 
-_OBJ = main.o vector.o database.o elf.o link.o
+_OBJ = main.o vector.o database.o elf.o link.o reloc.o
 OBJ = $(patsubst %,$(BUILD_DIR)/%,$(_OBJ))
 
 RAW_INCLUDES = $(patsubst %, $(INCLUDE_DIR)/%, $(INCLUDES))
