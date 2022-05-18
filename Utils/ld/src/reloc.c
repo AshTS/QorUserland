@@ -48,6 +48,18 @@ int apply_relocation(void* data, struct symbol_data* symbol, struct relocation_d
             return 1;
         }
     }
+    else if (reloc_type == 23)
+    {
+        int64_t value = (S + A - P) & (((1 << 20) - 1) << 12);
+
+        instructions[0] |= value;
+    }
+    else if (reloc_type == 24)
+    {
+        int64_t value = (S - P) & ((1 << 12) - 1);
+
+        instructions[0] |= (value << 20);
+    }
     else
     {
         printf("ld: Not yet implemented relocation type %i\n", reloc_type);

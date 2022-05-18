@@ -6,6 +6,7 @@
 #include <riscv/riscv.h>
 
 #include <libc/string.h>
+#include <libc/stdlib.h>
 
 struct section_data create_section_data(char* name)
 {
@@ -58,6 +59,20 @@ void place_symbol_at(struct vector sections, size_t section_index, struct symbol
 
     symbol->data.st_shndx = section_index + 3;
     symbol->data.st_value = sa[section_index].buffer.length;
+}
+
+int symbol_compare_function(struct symbol_data* a, struct symbol_data* b)
+{
+    return (a->data.st_info >> 4) - (b->data.st_info >> 4);
+}
+
+void reorder_symbols(struct vector* symbols)
+{
+    LOG("Reordering Symbols\n");
+    struct vector v = *symbols;
+    struct symbol_data* symbol_array = VEC_TO_ARRAY(v, struct symbol_data);
+
+    qsort(symbol_array, v.length, sizeof(struct symbol_data), symbol_compare_function);
 }
 
 struct vector construct_elf_file(struct vector sections, struct vector symbols);
@@ -127,6 +142,7 @@ void assemble_file_handle(FILE* file, const char* input_name, const char* output
 
             if (strcmp(sa[current_section_index].name, section_name))
             {
+                LOG("Creating new section for %s at index %i\n", section_name, current_section_index);
                 // Create a new section with the given name
                 struct section_data this_sec = create_section_data(section_name);
                 vector_append_ptr(&sections, &this_sec);
@@ -136,7 +152,6 @@ void assemble_file_handle(FILE* file, const char* input_name, const char* output
                 // Create the section for relocations with that name
                 struct relocation_group this_group = create_relocation_group(section_name, current_section_index);
                 vector_append_ptr(&relocations, &this_group);
-
             }
 
             i++;
@@ -183,6 +198,8 @@ void assemble_file_handle(FILE* file, const char* input_name, const char* output
 
             struct section_data* sa = VEC_TO_ARRAY(sections, struct section_data);
 
+            sa[current_section_index].type = SHT_PROGBITS;
+
             vector_append_buffer(&(sa[current_section_index].buffer), string_data, strlen(string_data) + 1);
 
             i++;
@@ -218,11 +235,14 @@ void assemble_file_handle(FILE* file, const char* input_name, const char* output
         {
             struct section_data* sa = VEC_TO_ARRAY(sections, struct section_data);
             struct relocation_group* ga = VEC_TO_ARRAY(relocations, struct relocation_group);
-            assemble_instruction(tokens, &i, &(sa[current_section_index].buffer), &(ga[current_section_index].relocations));
+            assemble_instruction(tokens, &i, &(sa[current_section_index].buffer), &(ga[current_section_index].relocations), &symbols, sections, current_section_index);
         }
     }
 
-    // Iterate over every section, printing out its name
+    // Reorder the symbols so that local variables are put first
+    reorder_symbols(&symbols);
+
+    // Iterate over every symbol, printing out its name
     struct symbol_data* symbol_array = VEC_TO_ARRAY(symbols, struct symbol_data);
     for (int i = 0; i < symbols.length; i++)
     {
@@ -230,16 +250,22 @@ void assemble_file_handle(FILE* file, const char* input_name, const char* output
     }
 
     // Form all of the relocation sections
+    struct section_data* sa = VEC_TO_ARRAY(sections, struct section_data);
     struct relocation_group* ga = VEC_TO_ARRAY(relocations, struct relocation_group);
     for (int i = 0; i < relocations.length; i++)
     {
 
         char rela_name_buffer[256] = ".rela";
 
+        if (!(sa[ga[i].link].flags & SHF_EXECINSTR))
+        {
+            continue;
+        }
+
         strcat(rela_name_buffer, ga[i].name);
         printf("Relocation Group: %s\n", rela_name_buffer);
 
-        struct section_data rela_section = create_section_data(rela_name_buffer);
+        struct section_data rela_section = create_section_data(strdup(rela_name_buffer));
         rela_section.type = SHT_RELA;
         rela_section.buffer = VECTOR(uint8_t);
         rela_section.entsize = 0x18;
@@ -254,7 +280,7 @@ void assemble_file_handle(FILE* file, const char* input_name, const char* output
             // Find the symbol for this relocation
             for (int k = 0; k < symbols.length; k++)
             {
-                printf("Searching for %s, found %s\n", ra[j].name, symbol_array[k].name, k);
+                // printf("Searching for %s, found %s\n", ra[j].name, symbol_array[k].name, k);
                 if (strcmp(symbol_array[k].name, ra[j].name) == 0)
                 {
                     ra[j].data.r_info |= ((uint64_t)k << 32);
@@ -289,13 +315,25 @@ struct section_data convert_symbols(struct vector symbols)
     sect.type = SHT_SYMTAB;
     sect.addralign = 8;
     sect.entsize = 0x18;
-    sect.info = 1;
 
     struct symbol_data* syms = VEC_TO_ARRAY(symbols, struct symbol_data);
 
     for (int i = 0; i < symbols.length; i++)
     {
-        vector_append_buffer(&sect.buffer, &(syms[i].data), sizeof(Elf64_Sym));
+        if ((syms[i].data.st_info >> 4) == STB_LOCAL)
+        {
+            vector_append_buffer(&sect.buffer, &(syms[i].data), sizeof(Elf64_Sym));
+        }
+    }
+
+    sect.info = sect.buffer.length / sizeof(Elf64_Sym);
+
+    for (int i = 0; i < symbols.length; i++)
+    {
+        if ((syms[i].data.st_info >> 4) != STB_LOCAL)
+        {
+            vector_append_buffer(&sect.buffer, &(syms[i].data), sizeof(Elf64_Sym));
+        }
     }
 
     return sect;

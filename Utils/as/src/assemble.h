@@ -43,7 +43,9 @@ void add_instruction(struct vector* byte_buffer, struct riscv_inst_repr inst);
 // Assemble a file from the file handle
 void assemble_file_handle(FILE* file, const char* input_name, const char* output_name);
 
+void place_symbol_at(struct vector sections, size_t section_index, struct symbol_data* symbol);
+
 // Assemble an instruction and write out to the section data
-int assemble_instruction(struct token* tokens, int* index, struct vector* byte_buffer, struct vector* relocation);
+int assemble_instruction(struct token* tokens, int* index, struct vector* byte_buffer, struct vector* relocation, struct vector* symbols, struct vector sections, size_t section_index);
 
 #endif // ASSEMBLE_H

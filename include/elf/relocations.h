@@ -40,7 +40,7 @@
 #define R_RISCV_32_PCREL 57
 
 #define ELF_R_INFO(sym, type) (((sym) << 32) | ((type)))
-#define ELF_R_SYM(info) ((uint32_t)((info) >> 32))
+#define ELF_R_SYM(info) (((uint32_t)((info) >> 32)) & 0xFFFFFFFF)
 #define ELF_R_TYPE(info) ((uint32_t)((info) & 0xFFFFFFFF))
 
 typedef struct 
