@@ -29,7 +29,7 @@ struct section_data convert_symbols(struct vector symbols)
 }
 
 
-struct vector construct_elf_file(struct vector sections, struct vector symbols, uint64_t start_symbol_offset, uint64_t vaddr_start)
+struct vector construct_elf_file(struct vector sections, struct vector symbols, uint64_t start_symbol_offset)
 {
     // First, we will create a number of buffers
     struct vector file_buffer = VECTOR(uint8_t);
@@ -127,7 +127,7 @@ struct vector construct_elf_file(struct vector sections, struct vector symbols, 
 
         off += padding;
 
-        for (int i = 0; i < padding; i++)
+        for (int j = 0; j < padding; j++)
         {
             vector_append(&section_data_buffer, 0);
         }
@@ -150,7 +150,7 @@ struct vector construct_elf_file(struct vector sections, struct vector symbols, 
             shs[3 + i].sh_link = 3 + sections.length - 1;
         }
 
-        if (i == 0)
+        if (strcmp(".text", section_array[i].name) == 0)
         {
             start_symbol_offset += section_array[i].address;
         }

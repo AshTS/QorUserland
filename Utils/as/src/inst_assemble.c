@@ -10,7 +10,6 @@ size_t NEXT_UNIQUE_IDENTIFIER_INDEX = 0;
 void add_relocation(uint64_t offset, char* name, uint32_t type, uint64_t addend, struct vector* relocations)
 {
     uint64_t value = type;
-    printf("%#lx %#x\n", value, type);
 
     struct relocation_data relocation = (struct relocation_data){.name = name, .data=(Elf64_Rela){.r_addend = addend, .r_info=value, .r_offset=offset}};
 
@@ -20,8 +19,6 @@ void add_relocation(uint64_t offset, char* name, uint32_t type, uint64_t addend,
 // Create a new symbol at the current location in the current section
 struct symbol_data place_new_symbol(char* name, struct vector sections, size_t section_index, struct vector* symbols)
 {
-    LOG("Adding symbol %s\n", name);
-
     struct symbol_data symbol = (struct symbol_data){
         .name = strdup(name), 
         .data = (Elf64_Sym){.st_info = 0, .st_name = 0, .st_other = 0, .st_shndx = 0, .st_size = 0, .st_value = 0}};
@@ -29,7 +26,7 @@ struct symbol_data place_new_symbol(char* name, struct vector sections, size_t s
     place_symbol_at(sections, section_index, &symbol);
     vector_append_ptr(symbols, &symbol);
 
-    LOG("Symbol %s has value %#lx\n", name, symbol.data.st_value);
+    LOG("Adding symbol %s has value %#lx\n", name, symbol.data.st_value);
 }
 
 // Create a new PC Relative High symbol
@@ -280,18 +277,16 @@ int assemble_instruction(struct token* tokens, int* index, struct vector* byte_b
 
         char* pcrel_symbol = place_pcrel_hi(sections, section_index, symbols);
 
-        add_relocation(byte_buffer->length, pcrel_symbol, R_RISCV_PCREL_HI20, 0, relocations);
+        add_relocation(byte_buffer->length, identifier, R_RISCV_PCREL_HI20, 0, relocations);
 
         add_instruction(byte_buffer, 
             (struct riscv_inst_repr){.inst = AUIPC, .r_dest = rd, .imm=0, .fmt=UFORMAT}
         );
 
-        add_relocation(byte_buffer->length, identifier, R_RISCV_PCREL_LO12_I, 0, relocations);
-
-        add_relocation(byte_buffer->length, identifier, R_RISCV_CALL, 0, relocations);
+        add_relocation(byte_buffer->length, pcrel_symbol, R_RISCV_PCREL_LO12_I, 0, relocations);
 
         add_instruction(byte_buffer, 
-            (struct riscv_inst_repr){.inst = LD, .r_dest = rd, .r_src1=rd, .imm=1, .fmt=IFORMAT}
+            (struct riscv_inst_repr){.inst = ADDI, .r_dest = rd, .r_src1=rd, .imm=0, .fmt=IFORMAT}
         );
     }
     // call instruction parsing
@@ -303,9 +298,12 @@ int assemble_instruction(struct token* tokens, int* index, struct vector* byte_b
 
         add_relocation(byte_buffer->length, identifier, R_RISCV_CALL, 0, relocations);
 
+        // auipc x6, offset[31:12]
         add_instruction(byte_buffer, 
             (struct riscv_inst_repr){.inst = AUIPC, .r_dest = 6, .imm=0, .fmt=UFORMAT}
         );
+
+        // jalr x1, x6, offset[11:0]
         add_instruction(byte_buffer, 
             (struct riscv_inst_repr){.inst = JALR, .r_dest = 1, .r_src1=6, .imm=0, .fmt=IFORMAT}
         );

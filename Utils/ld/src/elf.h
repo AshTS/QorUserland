@@ -28,7 +28,7 @@ struct symbol_data
 
 struct section_data create_section_data(char* name);
 
-struct vector construct_elf_file(struct vector sections, struct vector symbols, uint64_t start_symbol_offset, uint64_t vaddr_start);
+struct vector construct_elf_file(struct vector sections, struct vector symbols, uint64_t start_symbol_offset);
 int link(struct vector* elf_buffer);
 int apply_relocation(void* data, struct symbol_data* symbol, struct relocation_database_entry relocation, uint64_t current_section_addr);
 

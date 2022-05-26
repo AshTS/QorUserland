@@ -246,7 +246,7 @@ void assemble_file_handle(FILE* file, const char* input_name, const char* output
     struct symbol_data* symbol_array = VEC_TO_ARRAY(symbols, struct symbol_data);
     for (int i = 0; i < symbols.length; i++)
     {
-        printf("Symbol %s Value: %lx\n", symbol_array[i].name, symbol_array[i].data.st_value);
+        LOG("Symbol %s Value: %lx\n", symbol_array[i].name, symbol_array[i].data.st_value);
     }
 
     // Form all of the relocation sections
@@ -289,7 +289,7 @@ void assemble_file_handle(FILE* file, const char* input_name, const char* output
                 // printf("Symbol %s Value: %lx\n", , symbol_array[i].data.st_value);
             }
 
-            printf("Data: %#lx\n", ra[j].data.r_info);
+            // printf("Data: %#lx\n", ra[j].data.r_info);
 
             vector_append_buffer(&rela_section.buffer, &ra[j].data, sizeof(Elf64_Rela));
         }

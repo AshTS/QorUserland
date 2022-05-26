@@ -2,10 +2,30 @@
 
 #include "database.h"
 
-static uint64_t START_ADDR = 0x1000000;
+static uint64_t TEXT_START_ADDR = 0x8000000;
+static uint64_t RODATA_START_ADDR = 0x1000000;
 
-int append_section(struct section_data* dest_section, struct section_database_entry* src_section, struct vector* symbols, uint32_t section_index);
 struct symbol_data* find_exec_symbol(struct vector* symbols, const char* symbol_name);
+
+struct section_data construct_final_link_section(const char* name, uint32_t type, uint32_t flags, uint64_t address, uint32_t addralign)
+{
+    struct section_data section = create_section_data(name);
+
+    section.type = type;
+    section.flags = flags;
+    section.address = address;
+    section.addralign = addralign;
+
+    return section;
+}
+
+struct linking_context_data
+{
+    struct section_data* text_section;
+    struct section_data* rodata_section;
+};
+
+int append_section(struct linking_context_data context_data, struct section_database_entry* src_section, struct vector* symbols, uint32_t section_index);
 
 int link(struct vector* elf_buffer)
 {
@@ -35,29 +55,49 @@ int link(struct vector* elf_buffer)
 
     printf("_start Offset: 0x%lx\n", start_symbol_offset);
 
-    struct section_data start_section_data = create_section_data(".text");
+    struct section_data text_section = construct_final_link_section(".text",
+                                                SHT_PROGBITS,
+                                                SHF_ALLOC | SHF_EXECINSTR,
+                                                TEXT_START_ADDR, 4);
 
-    start_section_data.type = SHT_PROGBITS;
-    start_section_data.flags = SHF_ALLOC | SHF_EXECINSTR;
-    start_section_data.address = START_ADDR;
-    start_section_data.addralign = 4;
+    struct section_data rodata_section = construct_final_link_section(".rodata",
+                                                SHT_PROGBITS,
+                                                SHF_ALLOC | SHF_WRITE,
+                                                RODATA_START_ADDR, 64);
 
-    int result = append_section(&start_section_data, start_section, &symbols, 3 + sections.length);
+    struct linking_context_data context_data = (struct linking_context_data){
+        .rodata_section = &rodata_section,
+        .text_section = &text_section
+    };
+
+    int result = append_section(context_data, start_section, &symbols, 3 + sections.length);
 
     if (result)
     {
         return result;
     }
 
-    vector_append_ptr(&sections, &start_section_data);
+    vector_append_ptr(&sections, &text_section);
+    vector_append_ptr(&sections, &rodata_section);
 
-    *elf_buffer = construct_elf_file(sections, symbols, start_symbol_offset, START_ADDR);
+    *elf_buffer = construct_elf_file(sections, symbols, start_symbol_offset);
 
     return 0;
 }
 
-int append_section(struct section_data* dest_section, struct section_database_entry* src_section, struct vector* symbols, uint32_t section_index)
+int append_section(struct linking_context_data context_data, struct section_database_entry* src_section, struct vector* symbols, uint32_t section_index)
 {
+    struct section_data* dest_section;
+
+    if (src_section->section.sh_flags & SHF_EXECINSTR)
+    {
+        dest_section = context_data.text_section;
+    }
+    else
+    {
+        dest_section = context_data.rodata_section;
+    }
+
     printf("Appending Section %s(%s) to %s\n", src_section->file, src_section->name, dest_section->name);
 
     uint64_t offset = dest_section->buffer.length;
@@ -83,11 +123,13 @@ int append_section(struct section_data* dest_section, struct section_database_en
         {
             .name = symbol_array[i].name,
             .data = symbol_array[i].symbol,
-            .expanded_value = dest_section->address + offset + symbol.data.st_value
+            .expanded_value = dest_section->address + offset + symbol_array[i].symbol.st_value
         };
 
         symbol.data.st_shndx = section_index;
         symbol.data.st_value += offset;
+
+        printf("Adding symbol %s with value %lx\n", symbol.name, symbol.expanded_value);
 
         vector_append_ptr(symbols, &symbol);
     }
@@ -122,7 +164,7 @@ int append_section(struct section_data* dest_section, struct section_database_en
             }
 
             // Now, append that section to the current one
-            int result = append_section(dest_section, symbol_section, symbols, section_index);
+            int result = append_section(context_data, symbol_section, symbols, section_index);
             if (result)
             {
                 return result;
@@ -156,8 +198,11 @@ int append_section(struct section_data* dest_section, struct section_database_en
 
 struct symbol_data* find_exec_symbol(struct vector* symbols, const char* symbol_name)
 {
+    printf("Searching for exec symbol %s\n", symbol_name);
+
     if (symbols == NULL || symbols->ptr == NULL)
     {
+        printf("No Symbols Found\n");
         return NULL;
     }
 
@@ -165,6 +210,8 @@ struct symbol_data* find_exec_symbol(struct vector* symbols, const char* symbol_
 
     for (int i = 0; i < symbols->length; i++)
     {
+        printf("Checking symbol %s\n", array[i].name);
+        printf("    Value: %lx\n", array[i].expanded_value);
         if (strcmp(array[i].name, symbol_name) == 0)
         {
             return &array[i];
