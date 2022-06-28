@@ -64,6 +64,8 @@ int register_elf_symbols(uint8_t* buffer, const char* filename)
             char* name = elf_get_string(header, symbols[i].st_name);
             Elf64_Shdr* sh = elf_get_sh(header, symbols[i].st_shndx);
             char* section_name = elf_get_section_name(header, sh->sh_name);
+
+            printf("Symbol %s in section %s\n", name, section_name);
             
             struct symbol_database_entry entry = (struct symbol_database_entry){
                 .name = name, 

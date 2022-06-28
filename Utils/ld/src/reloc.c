@@ -5,7 +5,7 @@
 #include <libc/assert.h>
 #include <elf/relocations.h>
 
-int apply_relocation(void* data, struct symbol_data* symbol, struct relocation_database_entry relocation, uint64_t current_section_addr)
+int apply_relocation(void* data, struct symbol_data* symbol, struct relocation_database_entry relocation, uint64_t current_section_addr, struct vector* relocations)
 {
     uint32_t* instructions = data + relocation.relocation.r_offset;
 
@@ -32,8 +32,6 @@ int apply_relocation(void* data, struct symbol_data* symbol, struct relocation_d
     {
         int64_t value = S + A - P;
 
-        printf("VALUE: %lx\n", value);
-
         // Some math to make sure the sign extension plays nice
         int64_t jalr_arg = (value << 20) >> 20;
         int64_t auipc_arg = (value - jalr_arg) >> 12;
@@ -41,17 +39,17 @@ int apply_relocation(void* data, struct symbol_data* symbol, struct relocation_d
         instructions[0] |= (auipc_arg & 0xfffff) << 12;
         instructions[1] |= (jalr_arg & 0xfff) << 20;
     }
-    else if (reloc_type == 23)
+    else if (reloc_type == R_RISCV_PCREL_HI20)
     {
-        int64_t value = (S + A - P) & (((1 << 20) - 1) << 12);
+        int64_t value = (S - P);
 
-        instructions[0] |= value;
+        instructions[0] |= (value + 0x800);
     }
-    else if (reloc_type == 24)
+    else if (reloc_type == R_RISCV_PCREL_LO12_I)
     {
-        int64_t value = (S - P) & ((1 << 12) - 1);
+        // First, we need to find the relocation at the label and get the symbol address
 
-        instructions[0] |= (value << 20);
+        // Then, the final result ends up using symbol_address - hi20_reloc_offset
     }
     else
     {

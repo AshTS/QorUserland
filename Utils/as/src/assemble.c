@@ -10,7 +10,7 @@
 
 struct section_data create_section_data(char* name)
 {
-    return (struct section_data){.name = name, .buffer = VECTOR(char), .type = 0, .info=0, .addralign=4, .entsize=0};
+    return (struct section_data){.name = name, .buffer = VECTOR(char), .type = 0, .info=0, .addralign=4, .entsize=0, .flags=0};
 }
 
 struct relocation_group create_relocation_group(char* name, uint32_t link)
@@ -145,6 +145,8 @@ void assemble_file_handle(FILE* file, const char* input_name, const char* output
                 LOG("Creating new section for %s at index %i\n", section_name, current_section_index);
                 // Create a new section with the given name
                 struct section_data this_sec = create_section_data(section_name);
+                this_sec.type = SHT_PROGBITS;
+                this_sec.flags = SHF_ALLOC;
                 vector_append_ptr(&sections, &this_sec);
 
                 current_section_index = sections.length - 1;

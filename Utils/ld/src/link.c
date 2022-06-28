@@ -25,7 +25,7 @@ struct linking_context_data
     struct section_data* rodata_section;
 };
 
-int append_section(struct linking_context_data context_data, struct section_database_entry* src_section, struct vector* symbols, uint32_t section_index);
+int append_section(struct linking_context_data context_data, struct section_database_entry* src_section, struct vector* symbols);
 
 int link(struct vector* elf_buffer)
 {
@@ -70,7 +70,7 @@ int link(struct vector* elf_buffer)
         .text_section = &text_section
     };
 
-    int result = append_section(context_data, start_section, &symbols, 3 + sections.length);
+    int result = append_section(context_data, start_section, &symbols);
 
     if (result)
     {
@@ -85,17 +85,20 @@ int link(struct vector* elf_buffer)
     return 0;
 }
 
-int append_section(struct linking_context_data context_data, struct section_database_entry* src_section, struct vector* symbols, uint32_t section_index)
+int append_section(struct linking_context_data context_data, struct section_database_entry* src_section, struct vector* symbols)
 {
     struct section_data* dest_section;
+    uint32_t section_index;
 
     if (src_section->section.sh_flags & SHF_EXECINSTR)
     {
         dest_section = context_data.text_section;
+        section_index = 3;
     }
     else
     {
         dest_section = context_data.rodata_section;
+        section_index = 4;
     }
 
     printf("Appending Section %s(%s) to %s\n", src_section->file, src_section->name, dest_section->name);
@@ -164,7 +167,7 @@ int append_section(struct linking_context_data context_data, struct section_data
             }
 
             // Now, append that section to the current one
-            int result = append_section(context_data, symbol_section, symbols, section_index);
+            int result = append_section(context_data, symbol_section, symbols);
             if (result)
             {
                 return result;
@@ -185,7 +188,7 @@ int append_section(struct linking_context_data context_data, struct section_data
         }
 
         // Finally, apply the given relocation
-        int result = apply_relocation((void*)dest_section->buffer.ptr + offset, symbol, reloc_array[i], dest_section->address + offset);
+        int result = apply_relocation((void*)dest_section->buffer.ptr + offset, symbol, reloc_array[i], dest_section->address + offset, &relocations);
 
         if (result)
         {
